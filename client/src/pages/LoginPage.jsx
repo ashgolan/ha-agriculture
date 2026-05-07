@@ -108,6 +108,21 @@ export default function LoginPage() {
         <p className="text-center text-xs text-gray-400 mt-6">
           © {new Date().getFullYear()} ח.א חקלאות — כל הזכויות שמורות
         </p>
+
+        {/* A.Shaalan Tech signature */}
+        <div style={{ textAlign:"center", marginTop:"12px" }}>
+          <div style={{ fontSize:"11px", color:"#c4c4c4", marginBottom:"8px", letterSpacing:"0.06em" }}>
+            פותח ועוצב על ידי
+          </div>
+          <img
+            src="/logo-shaalan.png"
+            alt="A.Shaalan Tech"
+            style={{ height:"60px", width:"auto", display:"inline-block" }}
+          />
+          <div style={{ fontSize:"10px", color:"#c4c4c4", marginTop:"6px", letterSpacing:"0.06em" }}>
+            © {new Date().getFullYear()} כל הזכויות שמורות
+          </div>
+        </div>
       </div>
     </div>
   );
