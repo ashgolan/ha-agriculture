@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { direction: rtl; scroll-behavior: smooth; }
+  body {
+    font-family: "Heebo", "Assistant", sans-serif;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    -webkit-font-smoothing: antialiased;
+  }
+  input, select, textarea { @apply font-sans; }
+}
+
+@layer components {
+  .btn-primary { @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-secondary { @apply bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium px-4 py-2 rounded-lg transition-colors duration-200; }
+  .btn-danger { @apply bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200; }
+  .card { @apply bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6; }
+  .input { @apply w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all; }
+  .label { @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1; }
+  .table-header { @apply bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider; }
+  .table-row { @apply border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors; }
+}
+
+/* ════════════════════════════════════
+   MOBILE  (< 768px)
+   ════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* Hide on mobile */
+  .hide-mobile { display: none !important; }
+
+  /* ── Page padding ── */
+  .page-pad { padding: 14px 14px 80px !important; }
+
+  /* ── Tables scroll ── */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* ── Modals ── */
+  .modal-inner {
+    max-width: calc(100vw - 24px) !important;
+    max-height: 88vh !important;
+    padding: 18px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+  }
+
+  /* grid 2→1 inside modals */
+  .modal-inner > div[style*="grid"],
+  .modal-grid2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Dashboard ── */
+  .dash-grid4 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .dash-grid2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .dash-grid3 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* ── Personal tabs — horizontal scroll ── */
+  .personal-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 4px !important;
+  }
+  .personal-tabs button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── Top rows ── */
+  .top-row {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* ── Reports controls ── */
+  .reports-controls {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* ── Bids grid → 1 col ── */
+  .bids-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Stat cards smaller text ── */
+  .stat-num { font-size: 17px !important; }
+  .stat-icon { width: 36px !important; height: 36px !important; font-size: 16px !important; }
+
+  /* ── Donut chart ── */
+  .donut-wrap {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  /* ── Summary bar in expenses ── */
+  .summary-bar {
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* ════════════════════════════════════
+   TABLET  (768px – 1023px)
+   ════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hide-mobile { display: flex !important; }
+
+  .page-pad { padding: 20px 24px !important; }
+
+  .dash-grid3 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
