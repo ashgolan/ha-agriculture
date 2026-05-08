@@ -259,35 +259,18 @@ function BackupCard() {
         {/* Export section */}
         <div style={{ marginBottom:"20px" }}>
           <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151", marginBottom:"12px" }}>📤 יצוא גיבוי</div>
-          <div style={{ display:"flex", gap:"10px", flexWrap:"wrap" }}>
-            <button onClick={handleDownload} style={{
-              ...s.btn, display:"flex", alignItems:"center", gap:"8px",
-            }}
-              onMouseEnter={e=>e.currentTarget.style.background="#15803d"}
-              onMouseLeave={e=>e.currentTarget.style.background="#16a34a"}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              הורד גיבוי (ZIP)
-            </button>
-            <button onClick={handleSendEmail} disabled={emailSending} style={{
-              display:"flex", alignItems:"center", gap:"8px",
-              padding:"11px 18px", background:"#e6f1fb", color:"#0c447c",
-              border:"1px solid #85b7eb", borderRadius:"8px", fontSize:"14px",
-              fontWeight:"600", cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s",
-              opacity: emailSending ? 0.7 : 1,
-            }}
-              onMouseEnter={e=>e.currentTarget.style.background="#d1e8f8"}
-              onMouseLeave={e=>e.currentTarget.style.background="#e6f1fb"}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              {emailSending ? "שולח..." : "שלח לאימייל"}
-            </button>
-          </div>
+          <button onClick={handleDownload} style={{
+            ...s.btn, display:"flex", alignItems:"center", gap:"8px",
+          }}
+            onMouseEnter={e=>e.currentTarget.style.background="#15803d"}
+            onMouseLeave={e=>e.currentTarget.style.background="#16a34a"}>
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            הורד גיבוי (ZIP)
+          </button>
         </div>
 
         <div style={s.divider}/>
