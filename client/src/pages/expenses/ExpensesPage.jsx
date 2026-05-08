@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
-import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 const fetchExpenses  = () => api.get("/expenses").then(r => r.data.data);
@@ -61,8 +60,6 @@ function ExpenseModal({ initial, onClose, onSave, loading, maamValue }) {
   const setB = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.checked }));
 
   const subtotal   = parseFloat((toNum(form.number) * toNum(form.quantity)).toFixed(2));
-  const taxAmount  = form.tax ? parseFloat((subtotal * (toNum(maamValue) / 100)).toFixed(2)) : 0;
-  const grandTotal = parseFloat((subtotal + taxAmount).toFixed(2));
 
   const handleSave = () => {
     if (!form.name.trim())         return toast.error("נא להזין שם החומר");
@@ -100,41 +97,15 @@ function ExpenseModal({ initial, onClose, onSave, loading, maamValue }) {
           </div>
         </div>
 
-        {/* מע"מ toggle */}
-        <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"16px", padding:"12px 14px", background:"#fafaf9", borderRadius:"8px", border:"1px solid #f0f0ef" }}>
-          <label style={{ position:"relative", width:"36px", height:"20px", flexShrink:0 }}>
-            <input type="checkbox" checked={form.tax} onChange={setB("tax")}
-              style={{ opacity:0, width:0, height:0, position:"absolute" }}/>
-            <span style={{
-              position:"absolute", inset:0, borderRadius:"20px", cursor:"pointer", transition:"0.2s",
-              background: form.tax ? "#16a34a" : "#d1d5db",
-            }}/>
-            <span style={{
-              position:"absolute", top:"2px", right: form.tax ? "2px" : "18px",
-              width:"16px", height:"16px", borderRadius:"50%", background:"#fff",
-              transition:"0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.2)",
-            }}/>
-          </label>
-          <div>
-            <div style={{ fontSize:"13px", fontWeight:"500", color:"#374151" }}>
-              כולל מע"מ ({maamValue}%)
-            </div>
-            <div style={{ fontSize:"11px", color:"#a3a3a3" }}>
-              {form.tax ? `מע"מ: ${taxAmount.toFixed(2)} ₪` : "ללא מע\"מ"}
-            </div>
-          </div>
-        </div>
-
         {/* תצוגת סה"כ */}
         {(toNum(form.number) > 0 && toNum(form.quantity) > 0) && (
           <div style={s.totalPreview}>
             <div style={{ fontSize:"12px", color:"#6b7280" }}>
               {toNum(form.quantity)} × {toNum(form.number).toFixed(2)} ₪
-              {form.tax && <span> + {maamValue}% מע"מ</span>}
             </div>
             <div style={{ textAlign:"left" }}>
               <div style={{ fontSize:"11px", color:"#16a34a" }}>סה"כ</div>
-              <div style={{ fontSize:"18px", fontWeight:"700", color:"#16a34a" }}>{grandTotal.toFixed(2)} ₪</div>
+              <div style={{ fontSize:"18px", fontWeight:"700", color:"#16a34a" }}>{subtotal.toFixed(2)} ₪</div>
             </div>
           </div>
         )}
@@ -205,10 +176,6 @@ export default function ExpensesPage() {
           הוסף הוצאה
         </button>
       </div>
-
-      {/* VAT Summary */}
-      <VatSummaryBar total={subtotal} applyVat={true} label='סה"כ הוצאות' />
-
       {/* Summary bar */}
       <div style={s.summaryBar} className="summary-bar">
         <div style={s.statItem}>
@@ -257,16 +224,14 @@ export default function ExpensesPage() {
           <table style={s.table}>
             <thead>
               <tr>
-                {["תאריך","שם החומר","מחיר ליחידה","נפח/כמות","מע\"מ","סה\"כ",""].map(h => (
+                {["תאריך","שם החומר","מחיר ליחידה","נפח/כמות","סה\"כ",""].map(h => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.map((exp, i) => {
-                const sub     = toNum(exp.totalAmount);
-                const tax     = exp.tax ? sub * (maamValue / 100) : 0;
-                const total   = sub + tax;
+                const sub = toNum(exp.totalAmount);
                 return (
                   <tr key={exp._id}
                     style={{ background: i % 2 === 0 ? "#fff" : "#fefefe" }}
@@ -276,13 +241,8 @@ export default function ExpensesPage() {
                     <td style={{ ...s.td, fontWeight:"500", color:"#1a1a1a" }}>{exp.name}</td>
                     <td style={s.td}>{toNum(exp.number).toFixed(2)} ₪</td>
                     <td style={s.td}>{toNum(exp.quantity)}</td>
-                    <td style={s.td}>
-                      {exp.tax
-                        ? <span style={{ background:"#fffbeb", color:"#d97706", borderRadius:"6px", padding:"2px 8px", fontSize:"12px", fontWeight:"500" }}>+{tax.toFixed(2)} ₪</span>
-                        : <span style={{ color:"#a3a3a3", fontSize:"12px" }}>פטור</span>}
-                    </td>
                     <td style={{ ...s.td, fontWeight:"700", color:"#1a1a1a" }}>
-                      {total.toFixed(2)} ₪
+                      {sub.toFixed(2)} ₪
                     </td>
                     <td style={{ ...s.td, width:"80px" }}>
                       <div style={{ display:"flex", gap:"4px", justifyContent:"flex-end" }}>

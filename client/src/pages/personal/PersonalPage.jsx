@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
-import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 // ─── API ──────────────────────────────────────────────────────
@@ -35,6 +34,10 @@ const s = {
   td:         { padding:"11px 14px", fontSize:"13px", color:"#374151", borderBottom:"1px solid #f9f9f8", textAlign:"right" },
   iconBtn:    { background:"none", border:"none", cursor:"pointer", padding:"5px", borderRadius:"6px", display:"flex", alignItems:"center", color:"#a3a3a3", transition:"all 0.15s" },
   totalRow:   { background:"#f0fdf4", padding:"11px 14px", fontSize:"13px", fontWeight:"600", color:"#16a34a", textAlign:"left", borderTop:"1px solid #e5e7eb" },
+  summaryBar: { background:"#fff", borderRadius:"12px", border:"1px solid #f0f0ef", padding:"18px 24px", marginBottom:"16px", display:"flex", gap:"32px", alignItems:"center", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", flexWrap:"wrap" },
+  statItem:   { display:"flex", flexDirection:"column", gap:"3px" },
+  statLabel:  { fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" },
+  statValue:  { fontSize:"18px", fontWeight:"700", color:"#1a1a1a" },
   empty:      { padding:"48px", textAlign:"center", fontSize:"14px", color:"#a3a3a3" },
   overlay:    { position:"fixed", inset:0, background:"rgba(0,0,0,0.4)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"16px" },
   modal:      { background:"#fff", borderRadius:"16px", width:"100%", maxWidth:"560px", maxHeight:"90vh", overflowY:"auto", padding:"24px", boxShadow:"0 20px 60px rgba(0,0,0,0.15)", direction:"rtl" },
@@ -457,6 +460,8 @@ export default function PersonalPage() {
   const tab = TABS.find(t => t.key === activeTab);
   const ep  = endpoints[activeTab];
 
+  const { data: taxArr   = [] } = useQuery({ queryKey: ["taxValues"],         queryFn: fetchAll("/taxValues") });
+  const maamValue = parseFloat(taxArr?.[0]?.maamValue) || 17;
   const { data: records  = [] } = useQuery({ queryKey: [activeTab],                queryFn: fetchAll(ep) });
   const { data: clients  = [] } = useQuery({ queryKey: ["clients"],                 queryFn: fetchAll("/clients") });
   const { data: expenses = [] } = useQuery({ queryKey: ["expenses"],                queryFn: fetchAll("/expenses") });
@@ -520,9 +525,34 @@ export default function PersonalPage() {
           הוסף
         </button>
       </div>
-
-      {/* VAT Summary */}
-      <VatSummaryBar total={records.reduce((a,r) => a + toNum(r.totalAmount), 0)} applyVat={false} label={`סה"כ ${tab?.label}`} />
+      {/* Summary Bar */}
+      {(() => {
+        const total = records.reduce((a,r) => a + (parseFloat(r.totalAmount)||0), 0);
+        const taxAmt = parseFloat((total * (maamValue/100)).toFixed(2));
+        const grand  = parseFloat((total + taxAmt).toFixed(2));
+        return (
+          <div style={s.summaryBar} className="summary-bar">
+            <div style={s.statItem}>
+              <span style={s.statLabel}>סה"כ לפני מע"מ</span>
+              <span style={{ ...s.statValue, color:"#374151" }}>{total.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+            <div style={s.statItem}>
+              <span style={s.statLabel}>מע"מ ({maamValue}%)</span>
+              <span style={{ ...s.statValue, color:"#d97706", fontSize:"16px" }}>{taxAmt.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+            <div style={s.statItem}>
+              <span style={s.statLabel}>סה"כ כולל מע"מ</span>
+              <span style={{ ...s.statValue, color:"#16a34a" }}>{grand.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ marginRight:"auto" }}>
+              <div style={{ fontSize:"11px", color:"#a3a3a3" }}>שיעור מע"מ</div>
+              <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151" }}>{maamValue}%</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Table */}
       <GenericTable data={records} cols={tab?.cols||[]} onEdit={setModal} onDel={setDelItem}/>

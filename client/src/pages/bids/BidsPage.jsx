@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
-import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 const fetchBids    = () => api.get("/bids").then(r => r.data.data);
@@ -19,6 +18,10 @@ const s = {
   title:      { fontSize: "20px", fontWeight: "600", color: "#1a1a1a" },
   sub:        { fontSize: "13px", color: "#a3a3a3", marginTop: "3px" },
   btnPrimary: { display:"flex", alignItems:"center", gap:"7px", background:"#16a34a", color:"#fff", border:"none", borderRadius:"8px", padding:"9px 18px", fontSize:"13px", fontWeight:"600", cursor:"pointer", fontFamily:"inherit", boxShadow:"0 2px 8px rgba(22,163,74,0.25)", transition:"all 0.15s" },
+  summaryBar: { background:"#fff", borderRadius:"12px", border:"1px solid #f0f0ef", padding:"18px 24px", marginBottom:"16px", display:"flex", gap:"32px", alignItems:"center", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", flexWrap:"wrap" },
+  statItem:   { display:"flex", flexDirection:"column", gap:"3px" },
+  statLabel:  { fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" },
+  statValue:  { fontSize:"18px", fontWeight:"700", color:"#1a1a1a" },
   searchWrap: { position:"relative", marginBottom:"20px" },
   searchInput:{ width:"100%", padding:"10px 16px 10px 40px", border:"1px solid #e5e7eb", borderRadius:"10px", fontSize:"14px", background:"#fff", outline:"none", fontFamily:"inherit", color:"#1a1a1a", boxSizing:"border-box" },
   searchIcon: { position:"absolute", left:"14px", top:"50%", transform:"translateY(-50%)", color:"#a3a3a3" },
@@ -334,6 +337,8 @@ export default function BidsPage() {
   const [delConfirm, setDelConfirm] = useState(null);
 
   const { data: bids    = [] } = useQuery({ queryKey: ["bids"],    queryFn: fetchBids });
+  const { data: taxArr  = [] } = useQuery({ queryKey: ["taxValues"], queryFn: () => api.get("/taxValues").then(r => r.data.data) });
+  const maamValue = parseFloat(taxArr?.[0]?.maamValue) || 17;
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: fetchClients });
 
   const addMut  = useMutation({ mutationFn: createBid,
@@ -358,7 +363,9 @@ export default function BidsPage() {
 
   const approved = bids.filter(b => b.isApproved).length;
   const pending  = bids.length - approved;
-  const totalBids = bids.reduce((a, b) => a + toNum(b.totalAmount), 0);
+  const totalBids  = bids.reduce((a, b) => a + toNum(b.totalAmount), 0);
+  const taxTotal   = parseFloat((totalBids * (maamValue / 100)).toFixed(2));
+  const grandTotal = parseFloat((totalBids + taxTotal).toFixed(2));
 
   return (
     <div style={s.page} className="page-pad">
@@ -381,9 +388,27 @@ export default function BidsPage() {
           הצעה חדשה
         </button>
       </div>
-
-      {/* VAT Summary */}
-      <VatSummaryBar total={totalBids} applyVat={true} label='סה"כ הצעות מחיר' />
+      {/* Summary Bar */}
+      <div style={s.summaryBar} className="summary-bar">
+        <div style={s.statItem}>
+          <span style={s.statLabel}>סה"כ לפני מע"מ</span>
+          <span style={{ ...s.statValue, color:"#374151" }}>{totalBids.toFixed(2)} ₪</span>
+        </div>
+        <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+        <div style={s.statItem}>
+          <span style={s.statLabel}>מע"מ ({maamValue}%)</span>
+          <span style={{ ...s.statValue, color:"#d97706", fontSize:"16px" }}>{taxTotal.toFixed(2)} ₪</span>
+        </div>
+        <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+        <div style={s.statItem}>
+          <span style={s.statLabel}>סה"כ כולל מע"מ</span>
+          <span style={{ ...s.statValue, color:"#16a34a" }}>{grandTotal.toFixed(2)} ₪</span>
+        </div>
+        <div style={{ marginRight:"auto" }}>
+          <div style={{ fontSize:"11px", color:"#a3a3a3" }}>שיעור מע"מ</div>
+          <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151" }}>{maamValue}%</div>
+        </div>
+      </div>
 
       {/* Search */}
       <div style={s.searchWrap}>

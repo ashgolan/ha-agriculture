@@ -25,7 +25,6 @@ router.post("/login", loginLimiter, async (req, res) => {
     if (!isMatch) return sendError(res, "אימייל או סיסמא שגויים", 401);
 
     const accessToken = signToken(user._id);
-
     sendSuccess(res, {
       accessToken,
       user: { _id: user._id, email: user.email, role: user.role },
@@ -35,25 +34,33 @@ router.post("/login", loginLimiter, async (req, res) => {
   }
 });
 
-// POST /api/users/register
-router.post("/register", async (req, res) => {
+// POST /api/users/register — requires login + Admin role
+router.post("/register", protect, async (req, res) => {
   try {
-    const { email, password, role, adminKey } = req.body;
-    if (adminKey !== process.env.ADMIN_REGISTRATION_KEY)
-      return sendError(res, "מפתח הרשמה שגוי", 403);
+    // Only Admin can add users
+    if (req.user.role !== "Admin")
+      return sendError(res, "אין הרשאה — מנהלים בלבד", 403);
+
+    const { email, password, role } = req.body;
+    if (!email || !password) return sendError(res, "נא למלא את כל השדות", 400);
+
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) return sendError(res, "אימייל כבר קיים במערכת", 400);
 
     const salt = await bcrypt.genSalt(12);
     const hash = await bcrypt.hash(password, salt);
-    const user = await User.create({ email, password: hash, role: role || "User" });
+    const user = await User.create({ email: email.toLowerCase(), password: hash, role: role || "User" });
     sendSuccess(res, { _id: user._id, email: user.email, role: user.role }, 201);
   } catch (e) {
     sendError(res, e.message, 400);
   }
 });
 
-// GET /api/users
+// GET /api/users — requires login
 router.get("/", protect, async (req, res) => {
   try {
+    if (req.user.role !== "Admin")
+      return sendError(res, "אין הרשאה", 403);
     const users = await User.find().select("-password").lean();
     sendSuccess(res, users);
   } catch (e) {
@@ -61,34 +68,16 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-// PATCH /api/users/:id
-router.patch("/:id", protect, async (req, res) => {
-  try {
-    const { adminKey, password, ...rest } = req.body;
-    if (adminKey !== process.env.ADMIN_REGISTRATION_KEY)
-      return sendError(res, "מפתח שגוי", 403);
-
-    const update = { ...rest };
-    if (password) {
-      const salt = await bcrypt.genSalt(12);
-      update.password = await bcrypt.hash(password, salt);
-    }
-
-    const user = await User.findByIdAndUpdate(req.params.id, { $set: update }, { new: true })
-      .select("-password");
-    if (!user) return sendError(res, "משתמש לא נמצא", 404);
-    sendSuccess(res, user);
-  } catch (e) {
-    sendError(res, e.message, 400);
-  }
-});
-
-// DELETE /api/users/:id
+// DELETE /api/users/:id — Admin only
 router.delete("/:id", protect, async (req, res) => {
   try {
-    const { adminKey } = req.body;
-    if (adminKey !== process.env.ADMIN_REGISTRATION_KEY)
-      return sendError(res, "מפתח שגוי", 403);
+    if (req.user.role !== "Admin")
+      return sendError(res, "אין הרשאה — מנהלים בלבד", 403);
+
+    // Prevent deleting yourself
+    if (req.params.id === req.user._id.toString())
+      return sendError(res, "לא ניתן למחוק את עצמך", 400);
+
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return sendError(res, "משתמש לא נמצא", 404);
     sendSuccess(res, { message: "משתמש נמחק" });

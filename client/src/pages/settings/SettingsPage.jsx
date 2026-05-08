@@ -359,6 +359,178 @@ function BackupCard() {
   );
 }
 
+// ─── Users Card ───────────────────────────────────────────────
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function UsersCard() {
+  const qc = useQueryClient();
+  const [showAdd, setShowAdd]         = useState(false);
+  const [delUser, setDelUser]         = useState(null);
+  const [delConfirmEmail, setDelConfirmEmail] = useState("");
+  const [form, setForm]               = useState({ email:"", password:"", role:"User" });
+  const [emailErr, setEmailErr]       = useState("");
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => api.get("/users").then(r => r.data.data),
+  });
+
+  const addMut = useMutation({
+    mutationFn: (body) => api.post("/users/register", body).then(r => r.data),
+    onSuccess: () => { qc.invalidateQueries(["users"]); toast.success("משתמש נוסף!"); setShowAdd(false); setForm({ email:"", password:"", role:"User" }); },
+    onError: e => toast.error(e.response?.data?.message || "שגיאה"),
+  });
+
+  const delMut = useMutation({
+    mutationFn: (id) => api.delete(`/users/${id}`).then(r => r.data),
+    onSuccess: () => { qc.invalidateQueries(["users"]); toast.success("משתמש נמחק"); setDelUser(null); setDelConfirmEmail(""); },
+    onError: e => toast.error(e.response?.data?.message || "שגיאה"),
+  });
+
+  const handleAdd = () => {
+    if (!EMAIL_REGEX.test(form.email)) return setEmailErr("כתובת אימייל לא תקינה");
+    if (!form.password || form.password.length < 6) return toast.error("סיסמא חייבת להכיל לפחות 6 תווים");
+    setEmailErr("");
+    addMut.mutate(form);
+  };
+
+  const canDelete = delConfirmEmail === delUser?.email;
+
+  return (
+    <>
+      <div style={s.card}>
+        <div style={s.cardTitle}>👥 ניהול משתמשים</div>
+        <div style={s.cardSub}>הוספה, צפייה ומחיקת משתמשים</div>
+
+        {/* Users list */}
+        {isLoading ? (
+          <div style={{ fontSize:"13px", color:"#a3a3a3" }}>טוען...</div>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"16px" }}>
+            {users.map(u => (
+              <div key={u._id} style={{
+                display:"flex", alignItems:"center", justifyContent:"space-between",
+                padding:"12px 16px", background:"#fafaf9", borderRadius:"8px",
+                border:"1px solid #f0f0ef",
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                  <div style={{
+                    width:"34px", height:"34px", borderRadius:"50%",
+                    background: u.role==="Admin" ? "linear-gradient(135deg,#16a34a,#4ade80)" : "#e5e7eb",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:"13px", fontWeight:"700",
+                    color: u.role==="Admin" ? "#fff" : "#6b7280",
+                  }}>
+                    {u.email?.[0]?.toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize:"13px", fontWeight:"500", color:"#1a1a1a" }}>{u.email}</div>
+                    <div style={{ fontSize:"11px", color: u.role==="Admin" ? "#16a34a" : "#a3a3a3" }}>
+                      {u.role === "Admin" ? "מנהל" : "משתמש"}
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => { setDelUser(u); setDelConfirmEmail(""); }} style={{
+                  padding:"6px 12px", border:"1px solid #fecaca", borderRadius:"8px",
+                  background:"#fff1f2", color:"#e11d48", fontSize:"12px", fontWeight:"500",
+                  cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s",
+                }}
+                  onMouseEnter={e=>e.currentTarget.style.background="#ffe4e6"}
+                  onMouseLeave={e=>e.currentTarget.style.background="#fff1f2"}>
+                  מחק
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={s.divider}/>
+
+        {/* Add user */}
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)} style={{ ...s.btn, display:"flex", alignItems:"center", gap:"8px" }}
+            onMouseEnter={e=>e.currentTarget.style.background="#15803d"}
+            onMouseLeave={e=>e.currentTarget.style.background="#16a34a"}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            הוסף משתמש
+          </button>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+            <div>
+              <label style={s.label}>אימייל *</label>
+              <input style={{ ...s.input, borderColor: emailErr ? "#e11d48" : "#e5e7eb" }}
+                type="email" placeholder="example@gmail.com"
+                value={form.email}
+                onChange={e => { setForm(p=>({...p, email:e.target.value})); setEmailErr(""); }}
+                onFocus={fo} onBlur={bl}/>
+              {emailErr && <div style={{ fontSize:"11px", color:"#e11d48", marginTop:"4px" }}>{emailErr}</div>}
+            </div>
+            <div>
+              <label style={s.label}>סיסמא * (לפחות 6 תווים)</label>
+              <input style={s.input} type="password" placeholder="••••••••"
+                value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}
+                onFocus={fo} onBlur={bl}/>
+            </div>
+            <div>
+              <label style={s.label}>תפקיד</label>
+              <select style={{ ...s.input, cursor:"pointer" }} value={form.role}
+                onChange={e=>setForm(p=>({...p,role:e.target.value}))}>
+                <option value="User">משתמש רגיל</option>
+                <option value="Admin">מנהל</option>
+              </select>
+            </div>
+            <div style={{ display:"flex", gap:"10px" }}>
+              <button style={{ flex:1, padding:"11px", border:"1px solid #e5e7eb", borderRadius:"8px", background:"#fff", fontSize:"14px", color:"#6b7280", cursor:"pointer", fontFamily:"inherit" }}
+                onClick={() => { setShowAdd(false); setEmailErr(""); }}>ביטול</button>
+              <button style={{ ...s.btn, flex:2 }} disabled={addMut.isPending} onClick={handleAdd}
+                onMouseEnter={e=>e.currentTarget.style.background="#15803d"}
+                onMouseLeave={e=>e.currentTarget.style.background="#16a34a"}>
+                {addMut.isPending ? "מוסיף..." : "הוסף משתמש"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Delete Confirm Modal ── */}
+      {delUser && (
+        <div style={s.overlay} onClick={e=>e.target===e.currentTarget&&setDelUser(null)}>
+          <div style={s.modal}>
+            <div style={{ fontSize:"36px", marginBottom:"12px" }}>⚠️</div>
+            <div style={{ fontSize:"16px", fontWeight:"700", color:"#1a1a1a", marginBottom:"8px" }}>מחיקת משתמש</div>
+            <div style={{ fontSize:"13px", color:"#6b7280", lineHeight:"1.7", marginBottom:"20px" }}>
+              כדי למחוק את <strong>{delUser.email}</strong><br/>
+              הקלד את כתובת האימייל שלו לאישור:
+            </div>
+            <input
+              style={{ ...s.input, marginBottom:"16px", textAlign:"center", borderColor: delConfirmEmail && !canDelete ? "#e11d48" : "#e5e7eb" }}
+              placeholder={delUser.email}
+              value={delConfirmEmail}
+              onChange={e=>setDelConfirmEmail(e.target.value)}
+              onFocus={fo} onBlur={bl}
+            />
+            {delConfirmEmail && !canDelete && (
+              <div style={{ fontSize:"11px", color:"#e11d48", marginBottom:"12px" }}>האימייל אינו תואם</div>
+            )}
+            <div style={{ display:"flex", gap:"10px" }}>
+              <button style={{ flex:1, padding:"12px", border:"1px solid #e5e7eb", borderRadius:"10px", background:"#fff", fontSize:"14px", color:"#6b7280", cursor:"pointer", fontFamily:"inherit" }}
+                onClick={()=>{ setDelUser(null); setDelConfirmEmail(""); }}>ביטול</button>
+              <button
+                disabled={!canDelete || delMut.isPending}
+                style={{ flex:2, padding:"12px", border:"none", borderRadius:"10px", background: canDelete?"#e11d48":"#f0f0ef", fontSize:"14px", fontWeight:"700", color: canDelete?"#fff":"#a3a3a3", cursor:canDelete?"pointer":"not-allowed", fontFamily:"inherit", transition:"all 0.2s" }}
+                onClick={()=>delMut.mutate(delUser._id)}>
+                {delMut.isPending ? "מוחק..." : "מחק לצמיתות"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -368,6 +540,7 @@ export default function SettingsPage() {
       <div style={s.sub}>הגדרות מערכת — מחירים, מסים וגיבויים</div>
       <TractorCard qc={qc}/>
       <TaxCard qc={qc}/>
+      <UsersCard/>
       <BackupCard/>
     </div>
   );
