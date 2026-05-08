@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
+import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 const fetchSales    = () => api.get("/sales").then(r => r.data.data);
@@ -317,7 +318,7 @@ export default function SalesPage() {
   const tractorPrice  = toNum(tractorArr?.[0]?.price);
   // collect unique past purposes for autocomplete
   const pastPurposes  = useMemo(() => [...new Set(sales.map(s => s.purpose).filter(Boolean))], [sales]);
-  const totalRevenue  = sales.reduce((a, s) => a + toNum(s.totalAmount), 0);
+  const totalRevenue  = sales.reduce((a, r) => a + toNum(r.totalAmount), 0);
 
   const addMut  = useMutation({ mutationFn: createSale,
     onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("מכירה נוספה"); setModal(null); },
@@ -359,6 +360,9 @@ export default function SalesPage() {
           הוסף מכירה
         </button>
       </div>
+
+      {/* VAT Summary */}
+      <VatSummaryBar total={totalRevenue} applyVat={true} label='סה"כ מכירות' />
 
       <div style={s.searchWrap}>
         <span style={s.searchIcon}>

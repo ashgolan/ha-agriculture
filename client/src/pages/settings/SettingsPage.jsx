@@ -114,7 +114,7 @@ function TaxCard({ qc }) {
             ))}
           </div>
           <div style={s.divider}/>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"14px" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"14px" }} className="modal-grid2">
             <div><label style={s.label}>מע"מ חדש (%)</label><input style={s.input} type="number" placeholder={String(currentMaam)} value={maam} onChange={e=>setMaam(e.target.value)} onFocus={fo} onBlur={bl}/></div>
             <div><label style={s.label}>מס הכנסה (%)</label><input style={s.input} type="number" placeholder={String(currentMas)} value={mas} onChange={e=>setMas(e.target.value)} onFocus={fo} onBlur={bl}/></div>
           </div>

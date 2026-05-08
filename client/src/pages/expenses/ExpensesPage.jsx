@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
+import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 const fetchExpenses  = () => api.get("/expenses").then(r => r.data.data);
@@ -204,6 +205,9 @@ export default function ExpensesPage() {
           הוסף הוצאה
         </button>
       </div>
+
+      {/* VAT Summary */}
+      <VatSummaryBar total={subtotal} applyVat={true} label='סה"כ הוצאות' />
 
       {/* Summary bar */}
       <div style={s.summaryBar} className="summary-bar">

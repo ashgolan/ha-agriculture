@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
+import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 // ─── API ──────────────────────────────────────────────────────
@@ -519,6 +520,9 @@ export default function PersonalPage() {
           הוסף
         </button>
       </div>
+
+      {/* VAT Summary */}
+      <VatSummaryBar total={records.reduce((a,r) => a + toNum(r.totalAmount), 0)} applyVat={false} label={`סה"כ ${tab?.label}`} />
 
       {/* Table */}
       <GenericTable data={records} cols={tab?.cols||[]} onEdit={setModal} onDel={setDelItem}/>

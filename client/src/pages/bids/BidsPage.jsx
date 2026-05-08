@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
+import VatSummaryBar from "../../components/ui/VatSummaryBar.jsx";
 import toast from "react-hot-toast";
 
 const fetchBids    = () => api.get("/bids").then(r => r.data.data);
@@ -357,6 +358,7 @@ export default function BidsPage() {
 
   const approved = bids.filter(b => b.isApproved).length;
   const pending  = bids.length - approved;
+  const totalBids = bids.reduce((a, b) => a + toNum(b.totalAmount), 0);
 
   return (
     <div style={s.page} className="page-pad">
@@ -379,6 +381,9 @@ export default function BidsPage() {
           הצעה חדשה
         </button>
       </div>
+
+      {/* VAT Summary */}
+      <VatSummaryBar total={totalBids} applyVat={true} label='סה"כ הצעות מחיר' />
 
       {/* Search */}
       <div style={s.searchWrap}>
