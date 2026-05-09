@@ -78,6 +78,11 @@ router.delete("/:id", protect, async (req, res) => {
     if (req.params.id === req.user._id.toString())
       return sendError(res, "לא ניתן למחוק את עצמך", 400);
 
+    // Prevent deleting main admin
+    const targetUser = await User.findById(req.params.id);
+    if (targetUser?.email === "alaa.t.shaalan@gmail.com")
+      return sendError(res, "לא ניתן למחוק את מנהל המערכת הראשי", 403);
+
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return sendError(res, "משתמש לא נמצא", 404);
     sendSuccess(res, { message: "משתמש נמחק" });

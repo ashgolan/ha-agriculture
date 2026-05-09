@@ -430,7 +430,10 @@ function UsersCard() {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => { setDelUser(u); setDelConfirmEmail(""); }} style={{
+                <button onClick={() => {
+                  if (u.email === "alaa.t.shaalan@gmail.com") return toast.error("לא ניתן למחוק את מנהל המערכת הראשי");
+                  setDelUser(u); setDelConfirmEmail("");
+                }} style={{
                   padding:"6px 12px", border:"1px solid #fecaca", borderRadius:"8px",
                   background:"#fff1f2", color:"#e11d48", fontSize:"12px", fontWeight:"500",
                   cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s",
