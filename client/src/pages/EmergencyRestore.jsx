@@ -42,7 +42,7 @@ export default function EmergencyRestore() {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", margin:"20px 0" }}>
           {Object.entries(result).map(([key, count]) => {
             const labels = {
-              sales:"מכירות", expenses:"הוצאות", clients:"לקוחות",
+              sales:"הכנסות", expenses:"הוצאות", clients:"לקוחות",
               bids:"הצעות מחיר", users:"משתמשים",
               personalSales:"הכנסות אישיות", personalWorkers:"עובדים",
               personalRkrExpenses:"ריסוס", personalProductExpenses:"מוצרים",

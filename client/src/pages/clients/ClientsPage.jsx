@@ -3,14 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api.js";
 import toast from "react-hot-toast";
 
-// ─── API calls ───────────────────────────────────────────────
 const fetchClients = () => api.get("/clients").then(r => r.data.data);
 const createClient = (body) => api.post("/clients", body).then(r => r.data.data);
 const updateClient = ({ id, ...body }) => api.patch(`/clients/${id}`, body).then(r => r.data.data);
 const deleteClient = (id) => api.delete(`/clients/${id}`).then(r => r.data);
 
-// ─── Empty form ───────────────────────────────────────────────
-const emptyForm = { clientName: "", phone: "", address: "", totalDunam: "" };
+const emptyForm = { clientName: "", name: "", quantity: "" };
 
 // ─── Styles ───────────────────────────────────────────────────
 const s = {
@@ -99,44 +97,166 @@ const s = {
 };
 
 // ─── Modal ────────────────────────────────────────────────────
-function ClientModal({ initial, onClose, onSave, loading }) {
-  const [form, setForm] = useState(initial || emptyForm);
-  const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+function ClientModal({ initial, onClose, onSave, loading, existingClients }) {
   const isEdit = !!initial?._id;
+
+  const [form, setForm] = useState({
+    clientName: initial?.clientName || "",
+    name:       initial?.name       || "",
+    quantity:   initial?.quantity   || "",
+  });
+
+  const [fields, setFields] = useState(
+    isEdit
+      ? [{ name: initial?.name || "", quantity: initial?.quantity || "" }]
+      : [{ name: "", quantity: "" }]
+  );
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // اسماء الزبائن الفريدة
+  const uniqueNames = [...new Set(existingClients.map(c => c.clientName))].sort();
+
+  // اقتراحات بناءً على ما يكتبه
+  const suggestions = form.clientName.trim()
+    ? uniqueNames.filter(n => n.toLowerCase().includes(form.clientName.toLowerCase()) && n !== form.clientName)
+    : [];
+
+  const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const setField = (i, k) => (e) => {
+    const next = [...fields];
+    next[i] = { ...next[i], [k]: e.target.value };
+    setFields(next);
+  };
+
+  const addField = () => setFields(p => [...p, { name: "", quantity: "" }]);
+  const removeField = (i) => setFields(p => p.filter((_, idx) => idx !== i));
+
+  const fo = (e) => e.target.style.borderColor = "#86efac";
+  const bl = (e) => e.target.style.borderColor = "#e5e7eb";
+
+  const handleSave = () => {
+    if (!form.clientName.trim()) return;
+    if (isEdit) {
+      onSave({ clientName: form.clientName, name: fields[0].name, quantity: fields[0].quantity || 0 });
+    } else {
+      onSave(fields.map(f => ({
+        clientName: form.clientName.trim(),
+        name:       f.name,
+        quantity:   f.quantity || 0,
+      })));
+    }
+  };
 
   return (
     <div style={s.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={s.modal} className="modal-inner">
+      <div style={{ ...s.modal, maxWidth:"500px" }} className="modal-inner">
         <div style={s.modalTitle}>{isEdit ? "עריכת לקוח" : "הוספת לקוח חדש"}</div>
 
-        {[
-          { key: "clientName", label: "שם הלקוח *",    placeholder: "ישראל ישראלי" },
-          { key: "phone",      label: "טלפון",          placeholder: "050-0000000" },
-          { key: "address",    label: "כתובת",          placeholder: "רחוב, עיר" },
-          { key: "totalDunam", label: "דונמים בטיפול",  placeholder: "0", type: "number" },
-        ].map(({ key, label, placeholder, type }) => (
-          <div key={key} style={s.formGroup}>
-            <label style={s.label}>{label}</label>
-            <input
-              style={s.input}
-              type={type || "text"}
-              placeholder={placeholder}
-              value={form[key]}
-              onChange={set(key)}
-              onFocus={e => e.target.style.borderColor = "#86efac"}
-              onBlur={e => e.target.style.borderColor = "#e5e7eb"}
-            />
+        {/* שם לקוח עם autocomplete */}
+        <div style={{ ...s.formGroup, position:"relative" }}>
+          <label style={s.label}>שם הלקוח *</label>
+          <input style={s.input} placeholder="ישראל ישראלי"
+            value={form.clientName}
+            onChange={e => { set("clientName")(e); setShowSuggestions(true); }}
+            onFocus={e => { fo(e); setShowSuggestions(true); }}
+            onBlur={e => { bl(e); setTimeout(() => setShowSuggestions(false), 150); }}
+            autoComplete="off"
+          />
+
+          {/* Suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div style={{
+              position:"absolute", top:"100%", right:0, left:0, zIndex:100,
+              background:"#fff", border:"1px solid #e5e7eb", borderRadius:"8px",
+              boxShadow:"0 8px 24px rgba(0,0,0,0.12)", marginTop:"4px", overflow:"hidden",
+            }}>
+              <div style={{ padding:"6px 12px", fontSize:"10px", color:"#a3a3a3", borderBottom:"1px solid #f0f0ef" }}>
+                לקוחות קיימים — בחר להוסיף מטע
+              </div>
+              {suggestions.map(name => (
+                <div key={name}
+                  onMouseDown={() => {
+                    setForm(p => ({ ...p, clientName: name }));
+                    setShowSuggestions(false);
+                  }}
+                  style={{
+                    padding:"10px 14px", fontSize:"13px", color:"#374151",
+                    cursor:"pointer", display:"flex", alignItems:"center", gap:"8px",
+                    borderBottom:"1px solid #f9f9f8",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f0fdf4"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <span style={{ color:"#16a34a" }}>👤</span>
+                  {name}
+                  <span style={{ marginRight:"auto", fontSize:"11px", color:"#a3a3a3" }}>
+                    {existingClients.filter(c => c.clientName === name).length} מטעים
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* אדמות */}
+        <div style={{ borderTop:"1px solid #f0f0ef", paddingTop:"16px", marginTop:"4px" }}>
+          <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151", marginBottom:"12px" }}>
+            🌾 אדמות / מטעים
           </div>
-        ))}
+
+          {fields.map((f, i) => (
+            <div key={i} style={{
+              background:"#f8fdf9", borderRadius:"10px", border:"1px solid #e5f0e8",
+              padding:"14px", marginBottom:"10px",
+            }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
+                <span style={{ fontSize:"12px", fontWeight:"600", color:"#16a34a" }}>
+                  {isEdit ? "פרטי המטע" : `מטע ${i + 1}`}
+                </span>
+                {!isEdit && fields.length > 1 && (
+                  <button onClick={() => removeField(i)} style={{
+                    background:"none", border:"none", cursor:"pointer",
+                    color:"#e11d48", fontSize:"18px", lineHeight:1, padding:"0 4px",
+                  }}>×</button>
+                )}
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px" }}>
+                <div>
+                  <label style={s.label}>שם מטע / ארץ</label>
+                  <input style={s.input} placeholder="שם הכפר, אזור..."
+                    value={f.name} onChange={setField(i, "name")} onFocus={fo} onBlur={bl}/>
+                </div>
+                <div>
+                  <label style={s.label}>דונמים</label>
+                  <input style={s.input} type="number" placeholder="0"
+                    value={f.quantity} onChange={setField(i, "quantity")} onFocus={fo} onBlur={bl}/>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {!isEdit && (
+            <button onClick={addField} style={{
+              width:"100%", padding:"9px", border:"1px dashed #86efac",
+              borderRadius:"8px", background:"transparent", color:"#16a34a",
+              fontSize:"13px", fontWeight:"500", cursor:"pointer", fontFamily:"inherit",
+              marginBottom:"4px", transition:"all 0.15s",
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.background="#f0fdf4";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}>
+              + הוספת מטע
+            </button>
+          )}
+        </div>
 
         <div style={s.btnRow}>
           <button style={s.btnCancel} onClick={onClose}>ביטול</button>
-          <button
-            style={s.btnSave}
+          <button style={s.btnSave}
             disabled={loading || !form.clientName.trim()}
-            onClick={() => onSave(form)}
-          >
-            {loading ? "שומר..." : isEdit ? "עדכן" : "הוסף לקוח"}
+            onClick={handleSave}>
+            {loading ? "שומר..." : isEdit ? "עדכן" : `הוסף${fields.length > 1 ? ` (${fields.length} מטעים)` : ""}`}
           </button>
         </div>
       </div>
@@ -148,7 +268,7 @@ function ClientModal({ initial, onClose, onSave, loading }) {
 export default function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState(null); // null | "add" | {client}
+  const [modal, setModal] = useState(null);
   const [delConfirm, setDelConfirm] = useState(null);
 
   const { data: clients = [], isLoading } = useQuery({ queryKey: ["clients"], queryFn: fetchClients });
@@ -173,13 +293,25 @@ export default function ClientsPage() {
 
   const filtered = clients.filter(c =>
     c.clientName?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.address?.toLowerCase().includes(search.toLowerCase())
+    c.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = (form) => {
-    if (modal?._id) editMut.mutate({ id: modal._id, ...form });
-    else addMut.mutate(form);
+  const handleSave = async (formData) => {
+    if (Array.isArray(formData)) {
+      try {
+        for (const record of formData) {
+          await createClient(record);
+        }
+        qc.invalidateQueries(["clients"]);
+        toast.success(formData.length > 1 ? `${formData.length} קרקעות נוספו` : "לקוח נוסף בהצלחה");
+        setModal(null);
+      } catch (e) {
+        toast.error(e.response?.data?.message || "שגיאה");
+      }
+    } else {
+      if (modal?._id) editMut.mutate({ id: modal._id, ...formData });
+      else addMut.mutate(formData);
+    }
   };
 
   return (
@@ -239,7 +371,7 @@ export default function ClientsPage() {
           <table style={s.table}>
             <thead>
               <tr>
-                {["שם לקוח", "טלפון", "כתובת", "דונמים", ""].map(h => (
+                {["שם לקוח", "שם מטע / ארץ", "דונמים", ""].map(h => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
@@ -264,11 +396,10 @@ export default function ClientsPage() {
                       <span style={{ fontWeight: "500", color: "#1a1a1a" }}>{c.clientName}</span>
                     </div>
                   </td>
-                  <td style={{ ...s.td, direction: "ltr", textAlign: "right" }}>{c.phone || "—"}</td>
-                  <td style={s.td}>{c.address || "—"}</td>
+                  <td style={s.td}>{c.name || "—"}</td>
                   <td style={s.td}>
-                    {c.totalDunam ? (
-                      <span style={s.badge}>🌾 {c.totalDunam}</span>
+                    {c.quantity ? (
+                      <span style={s.badge}>🌾 {c.quantity}</span>
                     ) : "—"}
                   </td>
                   <td style={{ ...s.td, width: "80px" }}>
@@ -309,6 +440,7 @@ export default function ClientsPage() {
           onClose={() => setModal(null)}
           onSave={handleSave}
           loading={addMut.isPending || editMut.isPending}
+          existingClients={clients}
         />
       )}
 
@@ -336,6 +468,7 @@ export default function ClientsPage() {
           </div>
         </div>
       )}
+
 
     </div>
   );

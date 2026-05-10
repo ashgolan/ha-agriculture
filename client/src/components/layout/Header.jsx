@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 const pageTitles = {
   "/dashboard": { he:"לוח בקרה",     sub:"סקירה כללית" },
   "/clients":   { he:"לקוחות",        sub:"ניהול לקוחות" },
-  "/sales":     { he:"מכירות",         sub:"מעקב עסקאות" },
+  "/sales":     { he:"הכנסות",         sub:"מעקב עסקאות" },
   "/expenses":  { he:"הוצאות",         sub:"ניהול הוצאות" },
   "/bids":      { he:"הצעות מחיר",     sub:"הצעות ואישורים" },
   "/personal":  { he:"אישי",           sub:"נתונים אישיים" },

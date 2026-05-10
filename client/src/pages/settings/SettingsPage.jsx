@@ -239,7 +239,7 @@ function BackupCard() {
 
       <div style={s.card}>
         <div style={s.cardTitle}>💾 גיבוי ושחזור נתונים</div>
-        <div style={s.cardSub}>גיבוי מלא של כל הנתונים — מכירות, הוצאות, לקוחות, הצעות מחיר ועוד</div>
+        <div style={s.cardSub}>גיבוי מלא של כל הנתונים — הכנסות, הוצאות, לקוחות, הצעות מחיר ועוד</div>
 
         {/* Last backup info */}
         <div style={{ display:"flex", alignItems:"center", gap:"10px", padding:"12px 16px", background:"#fafaf9", borderRadius:"8px", border:"1px solid #f0f0ef", marginBottom:"20px" }}>
@@ -334,7 +334,7 @@ function BackupCard() {
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"20px" }}>
               {Object.entries(result).map(([key, count]) => {
                 const labels = {
-                  sales:"מכירות", expenses:"הוצאות", clients:"לקוחות",
+                  sales:"הכנסות", expenses:"הוצאות", clients:"לקוחות",
                   bids:"הצעות מחיר", users:"משתמשים", tractorPrices:"מחיר טרקטור",
                   taxValues:"ערכי מס", personalSales:"הכנסות אישיות",
                   personalWorkers:"עובדים", personalRkrExpenses:"ריסוס-קיסוח",

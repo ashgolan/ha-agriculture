@@ -10,7 +10,7 @@ const MONTHS_HE = ["ינואר","פברואר","מרץ","אפריל","מאי","�
 
 const SECTIONS = [
   {
-    key: "sales", label: "מכירות", icon: "💰", endpoint: "/sales",
+    key: "sales", label: "הכנסות", icon: "💰", endpoint: "/sales",
     columns: ["תאריך","לקוח","שם מטע","מטרה","דונמים",'סה"כ'],
     row: (r) => [r.date, r.clientName, r.name, r.purpose||"—", r.quantity||"—", `${fmt(r.totalAmount)} ₪`],
     hasDetail: true, hasClient: true,

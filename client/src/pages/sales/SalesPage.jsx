@@ -157,7 +157,7 @@ function SaleModal({ initial, onClose, onSave, loading, expenses, clients, tract
   return (
     <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={s.modal} className="modal-inner">
-        <div style={s.modalTitle}>{isEdit ? "עריכת מכירה" : "הוספת מכירה חדשה"}</div>
+        <div style={s.modalTitle}>{isEdit ? "עריכת הכנסה" : "הוספת הכנסה חדשה"}</div>
 
         {/* תאריך + לקוח */}
         <div style={s.grid2} className="modal-grid2">
@@ -168,9 +168,14 @@ function SaleModal({ initial, onClose, onSave, loading, expenses, clients, tract
           </div>
           <div style={s.formGroup}>
             <label style={s.label}>לקוח *</label>
-            <select style={s.select} value={form.clientName} onChange={set("clientName")}>
+            <select style={s.select} value={form.clientName} onChange={e => {
+              set("clientName")(e);
+              setVal("name", ""); // reset land when client changes
+            }}>
               <option value="">בחר לקוח</option>
-              {clients.map(c => <option key={c._id} value={c.clientName}>{c.clientName}</option>)}
+              {[...new Set(clients.map(c => c.clientName))].sort().map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -179,8 +184,20 @@ function SaleModal({ initial, onClose, onSave, loading, expenses, clients, tract
         <div style={s.grid2} className="modal-grid2">
           <div style={s.formGroup}>
             <label style={s.label}>שם המטע *</label>
-            <input style={s.input} placeholder="מטע תפוחים..." value={form.name} onChange={set("name")}
-              onFocus={e => e.target.style.borderColor = "#86efac"} onBlur={e => e.target.style.borderColor = "#e5e7eb"} />
+            {form.clientName ? (
+              <select style={s.select} value={form.name} onChange={set("name")}>
+                <option value="">בחר מטע</option>
+                {clients
+                  .filter(c => c.clientName === form.clientName && c.name && c.name !== "-")
+                  .map(c => (
+                    <option key={c._id} value={c.name}>{c.name} {c.quantity ? `(${c.quantity} ד׳)` : ""}</option>
+                  ))
+                }
+              </select>
+            ) : (
+              <input style={{ ...s.input, background:"#f9f9f9", color:"#a3a3a3" }}
+                placeholder="בחר לקוח תחילה" disabled />
+            )}
           </div>
           <div style={s.formGroup}>
             <label style={s.label}>מטרה</label>
@@ -298,7 +315,7 @@ function SaleModal({ initial, onClose, onSave, loading, expenses, clients, tract
         <div style={s.btnRow}>
           <button style={s.btnCancel} onClick={onClose}>ביטול</button>
           <button style={s.btnSave} disabled={loading} onClick={handleSave}>
-            {loading ? "שומר..." : isEdit ? "עדכן מכירה" : "הוסף מכירה"}
+            {loading ? "שומר..." : isEdit ? "עדכן הכנסה" : "הוסף הכנסה"}
           </button>
         </div>
       </div>
@@ -328,13 +345,13 @@ export default function SalesPage() {
   const grandTotal    = parseFloat((totalRevenue + taxTotal).toFixed(2));
 
   const addMut  = useMutation({ mutationFn: createSale,
-    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("מכירה נוספה"); setModal(null); },
+    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("הכנסה נוספה"); setModal(null); },
     onError: e => toast.error(e.response?.data?.message || "שגיאה") });
   const editMut = useMutation({ mutationFn: updateSale,
-    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("מכירה עודכנה"); setModal(null); },
+    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("הכנסה עודכנה"); setModal(null); },
     onError: e => toast.error(e.response?.data?.message || "שגיאה") });
   const delMut  = useMutation({ mutationFn: deleteSale,
-    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("מכירה נמחקה"); setDelConfirm(null); },
+    onSuccess: () => { qc.invalidateQueries(["sales"]); toast.success("הכנסה נמחקה"); setDelConfirm(null); },
     onError: e => toast.error(e.response?.data?.message || "שגיאה") });
 
   const handleSave = (form) => {
@@ -352,7 +369,7 @@ export default function SalesPage() {
     <div style={s.page} className="page-pad">
       <div style={s.topRow} className="top-row">
         <div>
-          <div style={s.title}>מכירות</div>
+          <div style={s.title}>הכנסות</div>
           <div style={s.sub}>
             {sales.length} עבודות &nbsp;|&nbsp;
             סה"כ: <strong style={{ color: "#16a34a" }}>{totalRevenue.toFixed(2)} ₪</strong>
@@ -364,7 +381,7 @@ export default function SalesPage() {
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          הוסף מכירה
+          הוסף הכנסה
         </button>
       </div>
       {/* Summary Bar */}
@@ -406,9 +423,9 @@ export default function SalesPage() {
           <div style={{ padding: "56px", textAlign: "center" }}>
             <div style={{ fontSize: "32px", marginBottom: "12px" }}>💰</div>
             <div style={{ fontSize: "15px", fontWeight: "500", color: "#525252" }}>
-              {search ? "לא נמצאו תוצאות" : "אין מכירות עדיין"}
+              {search ? "לא נמצאו תוצאות" : "אין הכנסות עדיין"}
             </div>
-            {!search && <div style={{ fontSize: "13px", color: "#a3a3a3", marginTop: "6px" }}>לחץ על 'הוסף מכירה' להתחלה</div>}
+            {!search && <div style={{ fontSize: "13px", color: "#a3a3a3", marginTop: "6px" }}>לחץ על 'הוסף הכנסה' להתחלה</div>}
           </div>
         ) : (
           <table style={s.table}>
@@ -480,7 +497,7 @@ export default function SalesPage() {
         <div style={s.overlay} onClick={e => e.target === e.currentTarget && setDelConfirm(null)}>
           <div style={{ ...s.modal, maxWidth: "360px", textAlign: "center" }}>
             <div style={{ fontSize: "32px", marginBottom: "12px" }}>🗑️</div>
-            <div style={{ fontSize: "16px", fontWeight: "600", color: "#1a1a1a", marginBottom: "8px" }}>מחיקת מכירה</div>
+            <div style={{ fontSize: "16px", fontWeight: "600", color: "#1a1a1a", marginBottom: "8px" }}>מחיקת הכנסה</div>
             <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "24px" }}>
               האם למחוק את <strong>{delConfirm.name}</strong> עבור <strong>{delConfirm.clientName}</strong>?
             </div>
