@@ -34,25 +34,35 @@ export default function EmergencyRestore() {
     }
   };
 
+  // ─── Labels for ALL collections (matches backup.js COLLECTIONS) ───
+  const LABELS = {
+    sales:                   "הכנסות",
+    expenses:                "הוצאות",
+    clients:                 "לקוחות",
+    bids:                    "הצעות מחיר",
+    users:                   "משתמשים",
+    tractorPrices:           "מחיר טרקטור",
+    taxValues:               "ערכי מס",
+    personalSales:           "הכנסות אישיות",
+    personalWorkers:         "עובדים",
+    personalRkrExpenses:     "ריסוס-קיסוח-ריסוק",
+    personalProductExpenses: "הוצאות מוצרים",
+    personalInvestments:     "השקעות",
+    personalTractorPrices:   "טרקטור אישי",
+  };
+
   if (result) return (
     <div style={{ minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px", direction:"rtl" }}>
       <div style={{ background:"#fff", borderRadius:"16px", padding:"32px", maxWidth:"420px", width:"100%", textAlign:"center", boxShadow:"0 8px 32px rgba(0,0,0,0.1)" }}>
         <div style={{ fontSize:"48px", marginBottom:"16px" }}>✅</div>
         <div style={{ fontSize:"20px", fontWeight:"700", color:"#1a1a1a", marginBottom:"8px" }}>הנתונים שוחזרו בהצלחה!</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", margin:"20px 0" }}>
-          {Object.entries(result).map(([key, count]) => {
-            const labels = {
-              sales:"הכנסות", expenses:"הוצאות", clients:"לקוחות",
-              bids:"הצעות מחיר", users:"משתמשים",
-              personalSales:"הכנסות אישיות", personalWorkers:"עובדים",
-              personalRkrExpenses:"ריסוס", personalProductExpenses:"מוצרים",
-              personalInvestments:"השקעות",
-            };
+          {Object.entries(result).map(([k, count]) => {
             if (count === 0) return null;
             return (
-              <div key={key} style={{ background:"#f0fdf4", borderRadius:"8px", padding:"10px", border:"1px solid #86efac" }}>
+              <div key={k} style={{ background:"#f0fdf4", borderRadius:"8px", padding:"10px", border:"1px solid #86efac" }}>
                 <div style={{ fontSize:"20px", fontWeight:"700", color:"#16a34a" }}>{count}</div>
-                <div style={{ fontSize:"11px", color:"#6b7280" }}>{labels[key]||key}</div>
+                <div style={{ fontSize:"11px", color:"#6b7280" }}>{LABELS[k] || k}</div>
               </div>
             );
           })}
@@ -106,12 +116,12 @@ export default function EmergencyRestore() {
           <label style={{ display:"block", fontSize:"12px", fontWeight:"500", color:"#6b7280", marginBottom:"6px" }}>
             קובץ גיבוי (ZIP)
           </label>
-          <input ref={fileRef} type="file" accept=".zip" onChange={e => setFile(e.target.files?.[0]||null)} style={{ display:"none" }}/>
+          <input ref={fileRef} type="file" accept=".zip" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display:"none" }}/>
           <button
             onClick={() => fileRef.current?.click()}
-            style={{ width:"100%", padding:"11px", border:"2px dashed #e5e7eb", borderRadius:"8px", background:"#fafaf9", fontSize:"14px", color: file ? "#16a34a" : "#9ca3af", cursor:"pointer", fontFamily:"inherit", fontWeight: file?"600":"400", transition:"all 0.15s" }}
-            onMouseEnter={e=>e.currentTarget.style.borderColor="#86efac"}
-            onMouseLeave={e=>e.currentTarget.style.borderColor=file?"#86efac":"#e5e7eb"}>
+            style={{ width:"100%", padding:"11px", border:"2px dashed #e5e7eb", borderRadius:"8px", background:"#fafaf9", fontSize:"14px", color: file ? "#16a34a" : "#9ca3af", cursor:"pointer", fontFamily:"inherit", fontWeight: file ? "600" : "400", transition:"all 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "#86efac"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = file ? "#86efac" : "#e5e7eb"}>
             {file ? `✅ ${file.name}` : "📁 בחר קובץ ZIP"}
           </button>
         </div>
@@ -127,7 +137,7 @@ export default function EmergencyRestore() {
         <button
           onClick={handleSubmit}
           disabled={loading || !key || !file}
-          style={{ width:"100%", padding:"13px", background:"#16a34a", color:"#fff", border:"none", borderRadius:"10px", fontSize:"15px", fontWeight:"600", cursor: loading||!key||!file ? "not-allowed":"pointer", fontFamily:"inherit", opacity: loading||!key||!file ? 0.6 : 1, transition:"all 0.15s" }}>
+          style={{ width:"100%", padding:"13px", background:"#16a34a", color:"#fff", border:"none", borderRadius:"10px", fontSize:"15px", fontWeight:"600", cursor: loading || !key || !file ? "not-allowed" : "pointer", fontFamily:"inherit", opacity: loading || !key || !file ? 0.6 : 1, transition:"all 0.15s" }}>
           {loading ? "משחזר נתונים..." : "שחזר עכשיו"}
         </button>
 

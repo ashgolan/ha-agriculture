@@ -4,73 +4,74 @@ import api from "../../services/api.js";
 
 const fetchData = (ep) => () => api.get(ep).then(r => r.data.data);
 const toNum = (v) => parseFloat(v) || 0;
-const fmt   = (n) => toNum(n).toFixed(2);
+const fmt = (n) => toNum(n).toFixed(2);
 
-const MONTHS_HE = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+const MONTHS_HE = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
 
 const SECTIONS = [
   {
     key: "sales", label: "הכנסות", icon: "💰", endpoint: "/sales",
-    columns: ["תאריך","לקוח","שם מטע","מטרה","דונמים",'סה"כ'],
-    row: (r) => [r.date, r.clientName, r.name, r.purpose||"—", r.quantity||"—", `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "לקוח", "שם מטע", "מטרה", "דונמים", 'סה"כ'],
+    row: (r) => [r.date, r.clientName, r.name, r.purpose || "—", r.quantity || "—", `${fmt(r.totalAmount)} ₪`],
     hasDetail: true, hasClient: true,
   },
   {
     key: "expenses", label: "הוצאות", icon: "📦", endpoint: "/expenses",
-    columns: ["תאריך","שם החומר","מחיר/יח׳","כמות",'סה"כ'],
+    columns: ["תאריך", "שם החומר", "מחיר/יח׳", "כמות", 'סה"כ'],
     row: (r) => [r.date, r.name, `${fmt(r.number)} ₪`, r.quantity, `${fmt(r.totalAmount)} ₪`],
   },
   {
     key: "clients", label: "לקוחות", icon: "👥", endpoint: "/clients",
     dateField: null,
-    columns: ["שם לקוח","טלפון","כתובת","דונמים"],
-    row: (r) => [r.clientName, r.phone||"—", r.address||"—", r.totalDunam||"—"],
+    columns: ["שם לקוח", "טלפון", "כתובת", "דונמים"],
+    row: (r) => [r.clientName, r.phone || "—", r.address || "—", r.totalDunam || "—"],
   },
   {
     key: "bids", label: "הצעות מחיר", icon: "📋", endpoint: "/bids",
-    columns: ["תאריך","לקוח","נושא","סטטוס",'סה"כ'],
-    row: (r) => [r.date, r.clientName, r.target||"—", r.isApproved?"מאושר":"ממתין", `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "לקוח", "נושא", "סטטוס", 'סה"כ'],
+    row: (r) => [r.date, r.clientName, r.target || "—", r.isApproved ? "מאושר" : "ממתין", `${fmt(r.totalAmount)} ₪`],
     hasClient: true,
   },
   {
     key: "personalSales", label: "הכנסות אישיות", icon: "💵", endpoint: "/personalSales",
-    columns: ["תאריך","מטע","זנים","משקל","כמות",'סה"כ'],
-    row: (r) => [r.date, r.name, r.strains||"—", r.weightType||"—", r.quantity||"—", `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "מטע", "זנים", "משקל", "כמות", 'סה"כ'],
+    row: (r) => [r.date, r.name, r.strains || "—", r.weightKind || "—", r.quantity || "—", `${fmt(r.totalAmount)} ₪`],
   },
   {
     key: "personalWorkers", label: "עובדים", icon: "👷", endpoint: "/personalWorkers",
-    columns: ["תאריך","עובד","מטע","יומית",'סה"כ'],
+    columns: ["תאריך", "עובד", "מטע", "יומית", 'סה"כ'],
     row: (r) => [r.date, r.clientName, r.name, `${fmt(r.number)} ₪`, `${fmt(r.totalAmount)} ₪`],
     hasClient: true,
   },
   {
     key: "personalRkrExpenses", label: "ריסוס-קיסוח-ריסוק", icon: "🚜", endpoint: "/personalRkrExpenses",
-    columns: ["תאריך","מטע","עבודה","דונמים","עלות עבודה",'סה"כ'],
-    row: (r) => [r.date, r.name, r.workKind||"—", r.quantity||"—", `${fmt(r.workPrice)} ₪`, `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "מטע", "עבודה", "דונמים", "עלות עבודה", 'סה"כ'],
+    row: (r) => [r.date, r.name, r.workKind || "—", r.quantity || "—", `${fmt(r.workPrice)} ₪`, `${fmt(r.totalAmount)} ₪`],
   },
   {
     key: "personalProductExpenses", label: "הוצאות מוצרים", icon: "📦", endpoint: "/personalProductExpenses",
-    columns: ["תאריך","מוצר","כמות","מחיר",'סה"כ'],
-    row: (r) => [r.date, r.name, r.quantity||"—", `${fmt(r.number)} ₪`, `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "מוצר", "כמות", "מחיר", 'סה"כ'],
+    row: (r) => [r.date, r.name, r.quantity || "—", `${fmt(r.number)} ₪`, `${fmt(r.totalAmount)} ₪`],
   },
   {
     key: "personalInvestments", label: "השקעות", icon: "📈", endpoint: "/personalInvestments",
-    columns: ["תאריך","השקעה","כמות","סכום",'סה"כ'],
-    row: (r) => [r.date, r.name, r.quantity||"—", `${fmt(r.number)} ₪`, `${fmt(r.totalAmount)} ₪`],
+    columns: ["תאריך", "השקעה", "סכום", "הערות", 'סה"כ'],
+    row: (r) => [r.date, r.name, `${fmt(r.number)} ₪`, r.other && r.other !== "-" ? r.other : "—", `${fmt(r.totalAmount)} ₪`],
   },
+
 ];
 
 // ─── Sale Detail Row (compact) ───────────────────────────────
 function SaleDetailRow({ sale, colCount, tractorPriceFromSettings }) {
-  const products   = sale.product || [];
+  const products = sale.product || [];
   const quantities = sale.quantitiesOfProduct || {};
-  const prices     = sale.pricesOfProducts || {};
-  const dunam      = toNum(sale.quantity);
+  const prices = sale.pricesOfProducts || {};
+  const dunam = toNum(sale.quantity);
 
   // סעיר טרקטור — מהגדרות × דונמים
   const tractorPrice = toNum(tractorPriceFromSettings);
   const tractorTotal = parseFloat((dunam * tractorPrice).toFixed(2));
-  const materialsTotal = Object.values(prices).reduce((a,v) => a + toNum(v), 0);
+  const materialsTotal = Object.values(prices).reduce((a, v) => a + toNum(v), 0);
 
   if (products.length === 0 && tractorTotal === 0) return null;
 
@@ -79,7 +80,7 @@ function SaleDetailRow({ sale, colCount, tractorPriceFromSettings }) {
 
   if (products.length > 0) {
     const matStr = products.map(prod => {
-      const qty   = toNum(quantities[prod]);
+      const qty = toNum(quantities[prod]);
       const price = toNum(prices[prod]);
       return `${prod} ${qty}ל׳ (${fmt(price)}₪)`;
     }).join(" | ");
@@ -108,13 +109,13 @@ function SaleDetailRow({ sale, colCount, tractorPriceFromSettings }) {
           padding: "6px 10px",
           direction: "rtl",
         }}>
-          <span style={{ fontSize:"10px", fontWeight:"600", color:"#f97316", letterSpacing:"0.05em" }}>
+          <span style={{ fontSize: "10px", fontWeight: "600", color: "#f97316", letterSpacing: "0.05em" }}>
             חישוב מפורט:
           </span>
           {parts.map((p, i) => (
-            <span key={i} style={{ color:"#78350f" }}>{p}</span>
+            <span key={i} style={{ color: "#78350f" }}>{p}</span>
           ))}
-          <span style={{ marginRight:"auto", fontWeight:"700", color:"#ea580c" }}>
+          <span style={{ marginRight: "auto", fontWeight: "700", color: "#ea580c" }}>
             = {fmt(sale.totalAmount)} ₪
           </span>
         </div>
@@ -124,27 +125,27 @@ function SaleDetailRow({ sale, colCount, tractorPriceFromSettings }) {
 }
 
 const s = {
-  page:      { padding: "28px 32px", direction: "rtl" },
-  title:     { fontSize: "20px", fontWeight: "600", color: "#1a1a1a", marginBottom: "4px" },
-  sub:       { fontSize: "13px", color: "#a3a3a3", marginBottom: "24px" },
-  controls:  { background: "#fff", borderRadius: "12px", border: "1px solid #f0f0ef", padding: "20px 24px", marginBottom: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", display: "flex", gap: "16px", alignItems: "flex-end", flexWrap: "wrap" },
-  fg:        { display: "flex", flexDirection: "column", gap: "6px", minWidth: "160px" },
-  label:     { fontSize: "12px", fontWeight: "500", color: "#6b7280" },
-  select:    { padding: "9px 13px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", fontFamily: "inherit", color: "#1a1a1a", outline: "none", background: "#fff", cursor: "pointer" },
-  btnPrint:  { display: "flex", alignItems: "center", gap: "7px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", marginRight: "auto" },
-  tabs:      { display: "flex", gap: "4px", marginBottom: "20px", flexWrap: "wrap" },
-  tab:       { padding: "8px 14px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "12px", fontWeight: "500", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", color: "#6b7280" },
+  page: { padding: "28px 32px", direction: "rtl" },
+  title: { fontSize: "20px", fontWeight: "600", color: "#1a1a1a", marginBottom: "4px" },
+  sub: { fontSize: "13px", color: "#a3a3a3", marginBottom: "24px" },
+  controls: { background: "#fff", borderRadius: "12px", border: "1px solid #f0f0ef", padding: "20px 24px", marginBottom: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", display: "flex", gap: "16px", alignItems: "flex-end", flexWrap: "wrap" },
+  fg: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "160px" },
+  label: { fontSize: "12px", fontWeight: "500", color: "#6b7280" },
+  select: { padding: "9px 13px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", fontFamily: "inherit", color: "#1a1a1a", outline: "none", background: "#fff", cursor: "pointer" },
+  btnPrint: { display: "flex", alignItems: "center", gap: "7px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", marginRight: "auto" },
+  tabs: { display: "flex", gap: "4px", marginBottom: "20px", flexWrap: "wrap" },
+  tab: { padding: "8px 14px", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#fff", fontSize: "12px", fontWeight: "500", cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s", color: "#6b7280" },
   tabActive: { background: "#f0fdf4", borderColor: "#86efac", color: "#16a34a", fontWeight: "600" },
-  report:    { background: "#fff", borderRadius: "12px", border: "1px solid #f0f0ef", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
+  report: { background: "#fff", borderRadius: "12px", border: "1px solid #f0f0ef", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
   repHeader: { padding: "20px 24px", borderBottom: "1px solid #f0f0ef", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  repTitle:  { fontSize: "16px", fontWeight: "600", color: "#1a1a1a" },
-  repMeta:   { fontSize: "12px", color: "#a3a3a3" },
-  table:     { width: "100%", borderCollapse: "collapse" },
-  th:        { padding: "11px 14px", fontSize: "11px", fontWeight: "600", color: "#a3a3a3", textAlign: "right", letterSpacing: "0.06em", borderBottom: "1px solid #f0f0ef", background: "#fafaf9", textTransform: "uppercase" },
-  td:        { padding: "11px 14px", fontSize: "13px", color: "#374151", borderBottom: "1px solid #f9f9f8", textAlign: "right" },
-  footer:    { padding: "14px 24px", background: "#f0fdf4", borderTop: "1px solid #86efac", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  repTitle: { fontSize: "16px", fontWeight: "600", color: "#1a1a1a" },
+  repMeta: { fontSize: "12px", color: "#a3a3a3" },
+  table: { width: "100%", borderCollapse: "collapse" },
+  th: { padding: "11px 14px", fontSize: "11px", fontWeight: "600", color: "#a3a3a3", textAlign: "right", letterSpacing: "0.06em", borderBottom: "1px solid #f0f0ef", background: "#fafaf9", textTransform: "uppercase" },
+  td: { padding: "11px 14px", fontSize: "13px", color: "#374151", borderBottom: "1px solid #f9f9f8", textAlign: "right" },
+  footer: { padding: "14px 24px", background: "#f0fdf4", borderTop: "1px solid #86efac", display: "flex", justifyContent: "space-between", alignItems: "center" },
   footerTxt: { fontSize: "13px", color: "#15803d", fontWeight: "600" },
-  empty:     { padding: "48px", textAlign: "center", color: "#a3a3a3", fontSize: "14px" },
+  empty: { padding: "48px", textAlign: "center", color: "#a3a3a3", fontSize: "14px" },
 };
 
 const PRINT_STYLE = `
@@ -222,12 +223,12 @@ const PRINT_STYLE = `
 `;
 
 export default function ReportsPage() {
-  const now   = new Date();
-  const [year,  setYear]  = useState(String(now.getFullYear()));
+  const now = new Date();
+  const [year, setYear] = useState(String(now.getFullYear()));
   const [month, setMonth] = useState(String(now.getMonth() + 1).padStart(2, "0"));
-  const [mode,  setMode]  = useState("month");
+  const [mode, setMode] = useState("month");
   const [activeSection, setActiveSection] = useState("sales");
-  const [clientFilter, setClientFilter]   = useState("");
+  const [clientFilter, setClientFilter] = useState("");
 
   const { data: taxArr = [] } = useQuery({ queryKey: ["taxValues"], queryFn: fetchData("/taxValues") });
   const { data: tractorArr = [] } = useQuery({ queryKey: ["tractorPrice"], queryFn: fetchData("/tractorPrice") });
@@ -250,17 +251,17 @@ export default function ReportsPage() {
       return d.startsWith(year);
     });
     if (clientFilter && section.hasClient) {
-      data = data.filter(r => (r.clientName||"").includes(clientFilter));
+      data = data.filter(r => (r.clientName || "").includes(clientFilter));
     }
     return data;
   }, [rawData, year, month, mode, section, clientFilter]);
 
   const total = useMemo(() => filtered.reduce((a, r) => a + toNum(r.totalAmount), 0), [filtered]);
 
-  const years = ["2023","2024","2025","2026","2027"];
+  const years = ["2023", "2024", "2025", "2026", "2027"];
 
   const periodLabel = mode === "month"
-    ? `${MONTHS_HE[parseInt(month)-1]} ${year}`
+    ? `${MONTHS_HE[parseInt(month) - 1]} ${year}`
     : `שנת ${year}`;
 
   const handlePrint = () => {
@@ -280,16 +281,16 @@ export default function ReportsPage() {
       <div style={s.controls} className="no-print reports-controls">
         <div style={s.fg}>
           <label style={s.label}>תקופה</label>
-          <div style={{ display:"flex", background:"#f5f5f4", borderRadius:"8px", padding:"3px" }}>
-            {[["month","חודשי"],["year","שנתי"]].map(([k,l]) => (
+          <div style={{ display: "flex", background: "#f5f5f4", borderRadius: "8px", padding: "3px" }}>
+            {[["month", "חודשי"], ["year", "שנתי"]].map(([k, l]) => (
               <button key={k} onClick={() => setMode(k)} style={{
-                flex:1, padding:"7px 12px", borderRadius:"6px", border:"none",
-                fontSize:"13px", fontWeight: mode===k?"600":"400",
-                background: mode===k?"#fff":"transparent",
-                color: mode===k?"#16a34a":"#6b7280",
-                cursor:"pointer", fontFamily:"inherit",
-                boxShadow: mode===k?"0 1px 4px rgba(0,0,0,0.08)":"none",
-                transition:"all 0.15s",
+                flex: 1, padding: "7px 12px", borderRadius: "6px", border: "none",
+                fontSize: "13px", fontWeight: mode === k ? "600" : "400",
+                background: mode === k ? "#fff" : "transparent",
+                color: mode === k ? "#16a34a" : "#6b7280",
+                cursor: "pointer", fontFamily: "inherit",
+                boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                transition: "all 0.15s",
               }}>{l}</button>
             ))}
           </div>
@@ -307,7 +308,7 @@ export default function ReportsPage() {
             <label style={s.label}>חודש</label>
             <select style={s.select} value={month} onChange={e => setMonth(e.target.value)}>
               {MONTHS_HE.map((m, i) => (
-                <option key={i} value={String(i+1).padStart(2,"0")}>{m}</option>
+                <option key={i} value={String(i + 1).padStart(2, "0")}>{m}</option>
               ))}
             </select>
           </div>
@@ -327,12 +328,12 @@ export default function ReportsPage() {
         )}
 
         <button style={s.btnPrint} onClick={handlePrint}
-          onMouseEnter={e=>e.currentTarget.style.background="#15803d"}
-          onMouseLeave={e=>e.currentTarget.style.background="#16a34a"}>
+          onMouseEnter={e => e.currentTarget.style.background = "#15803d"}
+          onMouseLeave={e => e.currentTarget.style.background = "#16a34a"}>
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <polyline points="6 9 6 2 18 2 18 9"/>
-            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8"/>
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
           </svg>
           הדפס / PDF
         </button>
@@ -353,12 +354,12 @@ export default function ReportsPage() {
       <div id="print-area">
 
         {/* ── Print-only header ── */}
-        <div className="print-doc-header" style={{ display:"none" }}>
+        <div className="print-doc-header" style={{ display: "none" }}>
           <div>
             <div className="company">ח.א חקלאות 🌾</div>
             <div className="meta">
               {section?.label} &nbsp;|&nbsp; {periodLabel} &nbsp;|&nbsp;
-              {new Date().toLocaleDateString("he-IL", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" })}
+              {new Date().toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
             </div>
           </div>
           {total > 0 && (
@@ -375,7 +376,7 @@ export default function ReportsPage() {
               <div style={s.repTitle}>{section?.icon} {section?.label}</div>
               <div style={s.repMeta}>{periodLabel} &nbsp;·&nbsp; {filtered.length} רשומות</div>
             </div>
-            <div style={{ fontSize:"22px", fontWeight:"700", color:"#16a34a" }}>
+            <div style={{ fontSize: "22px", fontWeight: "700", color: "#16a34a" }}>
               {total > 0 ? `${total.toFixed(2)} ₪` : ""}
             </div>
           </div>
@@ -384,7 +385,7 @@ export default function ReportsPage() {
             <div style={s.empty}>טוען נתונים...</div>
           ) : filtered.length === 0 ? (
             <div style={s.empty}>
-              <div style={{ fontSize:"28px", marginBottom:"10px" }}>📭</div>
+              <div style={{ fontSize: "28px", marginBottom: "10px" }}>📭</div>
               אין נתונים עבור {periodLabel}
             </div>
           ) : (
@@ -398,13 +399,13 @@ export default function ReportsPage() {
                     <>
                       {/* Main row */}
                       <tr key={r._id || i}
-                        style={{ background: i%2===0?"#fff":"#fefefe" }}>
+                        style={{ background: i % 2 === 0 ? "#fff" : "#fefefe" }}>
                         {section.row(r, maamValue).map((cell, j) => (
                           <td key={j} style={{
                             ...s.td,
                             borderBottom: section.hasDetail ? "none" : "1px solid #f9f9f8",
-                            fontWeight: j === section.columns.length-1 ? "600" : "400",
-                            color: j === section.columns.length-1 ? "#16a34a" : "#374151",
+                            fontWeight: j === section.columns.length - 1 ? "600" : "400",
+                            color: j === section.columns.length - 1 ? "#16a34a" : "#374151",
                           }}>{cell}</td>
                         ))}
                       </tr>
@@ -426,7 +427,7 @@ export default function ReportsPage() {
               {total > 0 && (
                 <div style={s.footer}>
                   <div style={s.footerTxt}>סה"כ {periodLabel}: {total.toFixed(2)} ₪</div>
-                  <div style={{ fontSize:"12px", color:"#a3a3a3" }}>{filtered.length} רשומות</div>
+                  <div style={{ fontSize: "12px", color: "#a3a3a3" }}>{filtered.length} רשומות</div>
                 </div>
               )}
             </>
@@ -434,7 +435,7 @@ export default function ReportsPage() {
         </div>
 
         {/* ── Print-only footer ── */}
-        <div className="print-footer" style={{ display:"none" }}>
+        <div className="print-footer" style={{ display: "none" }}>
           <div>סה"כ {periodLabel}: {total.toFixed(2)} ₪</div>
           <div className="records">{filtered.length} רשומות</div>
         </div>

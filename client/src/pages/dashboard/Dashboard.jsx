@@ -36,7 +36,7 @@ const s = {
   legendDot: { width: "12px", height: "12px", borderRadius: "50%", flexShrink: 0 },
 };
 
-// ─── Palette (Yasmine style) ──────────────────────────────────
+// ─── Palette ──────────────────────────────────────────────────
 const C = {
   teal:   { bg:"#E1F5EE", border:"#5DCAA5", icon:"#0F6E56", text:"#085041" },
   blue:   { bg:"#E6F1FB", border:"#85B7EB", icon:"#185FA5", text:"#0C447C" },
@@ -48,26 +48,26 @@ const SEGMENT_STYLES = [
   { color:"#0F6E56", bg:"#E1F5EE", border:"#5DCAA5", text:"#085041" }, // teal  — הכנסות כלליות
   { color:"#185FA5", bg:"#E6F1FB", border:"#85B7EB", text:"#0C447C" }, // blue  — הכנסות פרטיות
   { color:"#EF9F27", bg:"#FAEEDA", border:"#EF9F27", text:"#633806" }, // amber — הוצאות כלליות
-  { color:"#A32D2D", bg:"#FCEBEB", border:"#F09595", text:"#791F1F" }, // red   — הוצאות פרטיות
+  { color:"#A32D2D", bg:"#FCEBEB", border:"#F09595", text:"#791F1F" }, // red   — השקעות אישיות
 ];
 
 function fmtILS(n) {
   return new Intl.NumberFormat("he-IL", { style:"currency", currency:"ILS", maximumFractionDigits:0 }).format(Number(n||0));
 }
 
-// ─── Donut Chart (Yasmine League style) ───────────────────────
+// ─── Donut Chart ──────────────────────────────────────────────
 function DonutChart({ segments }) {
   const [hovered, setHovered] = useState(null);
   const total = segments.reduce((a, s) => a + s.value, 0);
 
   const cx = 90, cy = 90, r = 68, strokeW = 22;
   const circ = 2 * Math.PI * r;
-  const GAP  = 4; // gap between slices in px
+  const GAP  = 4;
 
   let cumulative = 0;
   const slices = segments.map((seg, i) => {
-    const pct   = total > 0 ? seg.value / total : 0;
-    const len   = Math.max(0, pct * circ - GAP);
+    const pct    = total > 0 ? seg.value / total : 0;
+    const len    = Math.max(0, pct * circ - GAP);
     const offset = circ - (cumulative * circ) + GAP / 2;
     cumulative += pct;
     return { ...seg, ...SEGMENT_STYLES[i], pct, len, offset };
@@ -84,12 +84,10 @@ function DonutChart({ segments }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:"24px", flexWrap:"wrap" }} className="donut-wrap">
 
-      {/* ── SVG ── */}
+      {/* SVG */}
       <div style={{ position:"relative", flexShrink:0 }}>
         <svg width="180" height="180" viewBox="0 0 180 180" style={{ overflow:"visible" }}>
-          {/* track */}
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0f0ef" strokeWidth={strokeW}/>
-
           {slices.map((sl, i) => (
             <circle key={i}
               cx={cx} cy={cy} r={r}
@@ -111,7 +109,7 @@ function DonutChart({ segments }) {
             />
           ))}
 
-          {/* Center */}
+          {/* Center text */}
           {hov ? (
             <>
               <text x={cx} y={cy-16} textAnchor="middle" fontSize="10" fill="#a3a3a3" fontFamily="Heebo,sans-serif">
@@ -135,7 +133,7 @@ function DonutChart({ segments }) {
         </svg>
       </div>
 
-      {/* ── Legend ── */}
+      {/* Legend */}
       <div style={{ flex:1, minWidth:"150px", display:"flex", flexDirection:"column", gap:"8px" }}>
         {slices.map((sl, i) => (
           <div key={i}
@@ -188,49 +186,38 @@ export default function Dashboard() {
   const hour    = now.getHours();
   const greeting = hour < 12 ? "בוקר טוב" : hour < 18 ? "צהריים טובים" : "ערב טוב";
 
-  const { data: sales           = [] } = useQuery({ queryKey: ["sales"],                   queryFn: fetchAll("/sales") });
-  const { data: expenses        = [] } = useQuery({ queryKey: ["expenses"],                queryFn: fetchAll("/expenses") });
-  const { data: clients         = [] } = useQuery({ queryKey: ["clients"],                 queryFn: fetchAll("/clients") });
-  const { data: bids            = [] } = useQuery({ queryKey: ["bids"],                    queryFn: fetchAll("/bids") });
-  const { data: taxArr          = [] } = useQuery({ queryKey: ["taxValues"],               queryFn: fetchAll("/taxValues") });
-  const { data: personalSales   = [] } = useQuery({ queryKey: ["personalSales"],           queryFn: fetchAll("/personalSales") });
-  const { data: personalExp     = [] } = useQuery({ queryKey: ["personalProductExpenses"], queryFn: fetchAll("/personalProductExpenses") });
-  const { data: personalRkr     = [] } = useQuery({ queryKey: ["personalRkrExpenses"],     queryFn: fetchAll("/personalRkrExpenses") });
-  const { data: personalInv     = [] } = useQuery({ queryKey: ["personalInvestments"],     queryFn: fetchAll("/personalInvestments") });
-
-  const maam = toNum(taxArr?.[0]?.maamValue) || 17;
+  const { data: sales         = [] } = useQuery({ queryKey: ["sales"],               queryFn: fetchAll("/sales") });
+  const { data: expenses      = [] } = useQuery({ queryKey: ["expenses"],            queryFn: fetchAll("/expenses") });
+  const { data: clients       = [] } = useQuery({ queryKey: ["clients"],             queryFn: fetchAll("/clients") });
+  const { data: bids          = [] } = useQuery({ queryKey: ["bids"],                queryFn: fetchAll("/bids") });
+  const { data: personalSales = [] } = useQuery({ queryKey: ["personalSales"],       queryFn: fetchAll("/personalSales") });
+  const { data: personalRkr   = [] } = useQuery({ queryKey: ["personalRkrExpenses"],queryFn: fetchAll("/personalRkrExpenses") });
+  const { data: personalInv   = [] } = useQuery({ queryKey: ["personalInvestments"],queryFn: fetchAll("/personalInvestments") });
 
   const thisMonth = (arr) => arr.filter(r => (r.date||"").startsWith(`${year}-${month}`));
 
   // ─── Totals ──────────────────────────────────────────────
-  const totalSales      = sales.reduce((a,r) => a + toNum(r.totalAmount), 0);
+  const totalSales         = sales.reduce((a,r) => a + toNum(r.totalAmount), 0);
   const totalPersonalSales = personalSales.reduce((a,r) => a + toNum(r.totalAmount), 0)
-                           + (personalRkr.reduce((a,r) => a + toNum(r.totalAmount), 0));
+                           + personalRkr.reduce((a,r) => a + toNum(r.totalAmount), 0);
 
-  const totalExpGeneral = expenses.reduce((a,r) => {
-    const sub = toNum(r.totalAmount);
-    return a + sub + (r.tax ? sub*(maam/100) : 0);
-  }, 0);
+  const totalExpGeneral = expenses.reduce((a,r) => a + toNum(r.totalAmount), 0);
 
-  const totalExpPersonal = personalExp.reduce((a,r) => a + toNum(r.totalAmount), 0)
-                         + personalInv.reduce((a,r) => a + toNum(r.totalAmount), 0);
+  const totalPersonalInvestments = personalInv.reduce((a,r) => a + toNum(r.totalAmount), 0);
 
   // Month
   const monthRevenue  = thisMonth(sales).reduce((a,r) => a + toNum(r.totalAmount), 0);
-  const monthExpenses = thisMonth(expenses).reduce((a,r) => {
-    const sub = toNum(r.totalAmount);
-    return a + sub + (r.tax ? sub*(maam/100) : 0);
-  }, 0);
-  const monthProfit   = monthRevenue - monthExpenses;
-  const pendingBids   = bids.filter(b => !b.isApproved).length;
-  const approvedBids  = bids.filter(b => b.isApproved).length;
+  const monthExpenses = thisMonth(expenses).reduce((a,r) => a + toNum(r.totalAmount), 0);
+  const monthProfit  = monthRevenue - monthExpenses;
+  const pendingBids  = bids.filter(b => !b.isApproved).length;
+  const approvedBids = bids.filter(b => b.isApproved).length;
 
   // ─── Donut segments ───────────────────────────────────────
   const donutSegments = [
     { label:"הכנסות כלליות",  value: totalSales },
     { label:"הכנסות פרטיות",  value: totalPersonalSales },
     { label:"הוצאות כלליות",  value: totalExpGeneral },
-    { label:"הוצאות פרטיות",  value: totalExpPersonal },
+    { label:"השקעות אישיות",  value: totalPersonalInvestments },
   ];
 
   // ─── Top clients ──────────────────────────────────────────
@@ -239,7 +226,7 @@ export default function Dashboard() {
     if (!s.clientName) return;
     clientRevMap[s.clientName] = (clientRevMap[s.clientName]||0) + toNum(s.totalAmount);
   });
-  const topClients  = Object.entries(clientRevMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topClients   = Object.entries(clientRevMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxClientRev = topClients[0]?.[1] || 1;
 
   // ─── Last 6 months ────────────────────────────────────────
@@ -267,10 +254,10 @@ export default function Dashboard() {
       {/* Stat cards */}
       <div style={s.grid4} className="dash-grid4">
         {[
-          { label:"לקוחות",           value: clients.length,          icon:"👥", color:"#16a34a", bg:"#f0fdf4", to:"/clients" },
-          { label:`הכנסות ${monthHe}`, value:`${monthRevenue.toFixed(0)} ₪`, icon:"💰", color:"#0284c7", bg:"#f0f9ff", to:"/sales" },
-          { label:`הוצאות ${monthHe}`, value:`${monthExpenses.toFixed(0)} ₪`, icon:"📦", color:"#f97316", bg:"#fff7ed", to:"/expenses" },
-          { label:"הצעות פתוחות",     value: pendingBids,             icon:"📋", color:"#7c3aed", bg:"#faf5ff", to:"/bids" },
+          { label:"לקוחות",            value: clients.length,                  icon:"👥", color:"#16a34a", bg:"#f0fdf4", to:"/clients" },
+          { label:`הכנסות ${monthHe}`, value:`${monthRevenue.toFixed(0)} ₪`,   icon:"💰", color:"#0284c7", bg:"#f0f9ff", to:"/sales" },
+          { label:`הוצאות ${monthHe}`, value:`${monthExpenses.toFixed(0)} ₪`,  icon:"📦", color:"#f97316", bg:"#fff7ed", to:"/expenses" },
+          { label:"הצעות פתוחות",      value: pendingBids,                     icon:"📋", color:"#7c3aed", bg:"#faf5ff", to:"/bids" },
         ].map(card => (
           <div key={card.label} style={s.statCard}
             onClick={() => navigate(card.to)}
@@ -299,11 +286,11 @@ export default function Dashboard() {
           <div style={s.secTitle}>📈 סיכום {monthHe}</div>
           {[
             { label:"הכנסות",               val:`${monthRevenue.toFixed(2)} ₪`,  color:"#16a34a" },
-            { label:`הוצאות (כולל מע"מ)`,   val:`${monthExpenses.toFixed(2)} ₪`, color:"#f97316" },
-            { label:"רווח גולמי",            val:`${monthProfit.toFixed(2)} ₪`,  color: monthProfit>=0?"#16a34a":"#e11d48" },
+            { label:"הוצאות",                val:`${monthExpenses.toFixed(2)} ₪`, color:"#f97316" },
+            { label:"רווח גולמי",            val:`${monthProfit.toFixed(2)} ₪`,   color: monthProfit>=0?"#16a34a":"#e11d48" },
             { label:"עסקאות החודש",          val:`${thisMonth(sales).length}`,    color:"#374151" },
-            { label:"הצעות מאושרות",         val:`${approvedBids}`,              color:"#7c3aed" },
-            { label:'סה"כ הכנסות (כל הזמן)',  val:`${totalSales.toFixed(2)} ₪`,  color:"#0284c7" },
+            { label:"הצעות מאושרות",         val:`${approvedBids}`,               color:"#7c3aed" },
+            { label:'סה"כ הכנסות (כל הזמן)', val:`${totalSales.toFixed(2)} ₪`,   color:"#0284c7" },
           ].map((row,i,arr) => (
             <div key={i} style={{ ...s.row, borderBottom: i===arr.length-1?"none":"1px solid #f9f9f8" }}>
               <span style={s.rowLabel}>{row.label}</span>
@@ -374,11 +361,11 @@ export default function Dashboard() {
         <div style={s.secTitle}>⚡ קישורים מהירים</div>
         <div style={{ display:"flex", gap:"10px", flexWrap:"wrap" }}>
           {[
-            { label:"+ הוסף מכירה",     to:"/sales" },
-            { label:"+ הוסף לקוח",      to:"/clients" },
-            { label:"+ הוסף הוצאה",     to:"/expenses" },
-            { label:"+ הצעת מחיר",      to:"/bids" },
-            { label:"📊 דוחות",          to:"/reports" },
+            { label:"+ הוסף מכירה",  to:"/sales" },
+            { label:"+ הוסף לקוח",   to:"/clients" },
+            { label:"+ הוסף הוצאה",  to:"/expenses" },
+            { label:"+ הצעת מחיר",   to:"/bids" },
+            { label:"📊 דוחות",       to:"/reports" },
           ].map(link => (
             <button key={link.to} style={s.quickBtn} onClick={() => navigate(link.to)}
               onMouseEnter={e=>{ e.currentTarget.style.background="#f0fdf4"; e.currentTarget.style.borderColor="#86efac"; e.currentTarget.style.color="#16a34a"; }}
