@@ -136,7 +136,9 @@ function BidModal({ initial, onClose, onSave, loading, clients }) {
             <label style={s.label}>לקוח *</label>
             <select style={s.select} value={form.clientName} onChange={set("clientName")}>
               <option value="">בחר לקוח</option>
-              {clients.map(c => <option key={c._id} value={c.clientName}>{c.clientName}</option>)}
+              {[...new Set(clients.map(c => c.clientName))].sort().map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
             </select>
           </div>
           <div style={s.formGroup}>

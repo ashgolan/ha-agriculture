@@ -129,7 +129,7 @@ function DelConfirm({ item, onClose, onDel, loading }) {
 // ══════════════════════════════════════════════════════════════
 const WORK_TYPES = ["ריסוס","קיסוח","ריסוק"];
 
-function RkrModal({ initial, onClose, onSave, loading, expenses, clients }) {
+function RkrModal({ initial, onClose, onSave, loading, expenses, clients, tractorPrice }) {
   const isEdit = !!initial?._id;
 
   const [form, setForm] = useState({
@@ -138,7 +138,7 @@ function RkrModal({ initial, onClose, onSave, loading, expenses, clients }) {
     name:                initial?.name        || "",
     workKind:            initial?.workKind    || "ריסוס",
     quantity:            initial?.quantity    || "",
-    workPrice:           initial?.workPrice   || "",
+    workPrice:           initial?.workPrice   || tractorPrice || "",
     other:               initial?.other       || "",
     product:             initial?.product     || [],
     quantitiesOfProduct: initial?.quantitiesOfProduct || {},
@@ -273,9 +273,9 @@ function RkrModal({ initial, onClose, onSave, loading, expenses, clients }) {
 
         <div style={s.divider}/>
 
-        {/* עבודה */}
+        {/* עבודת טרקטור */}
         <div style={s.fg}>
-          <label style={{ ...s.label, fontSize:"13px", fontWeight:"600", color:"#374151" }}>💼 עלות עבודה (₪)</label>
+          <label style={{ ...s.label, fontSize:"13px", fontWeight:"600", color:"#374151" }}>🚜 עלות עבודת טרקטור (₪/דונם)</label>
           <input style={s.input} type="number" placeholder="0" value={form.workPrice} onChange={set("workPrice")} onFocus={fo} onBlur={bl}/>
         </div>
 
@@ -362,8 +362,8 @@ const TABS = [
     cols: [
       { key:"date", label:"תאריך", style:{fontSize:"12px",color:"#6b7280"} },
       { key:"name", label:"מטע", style:{fontWeight:"500",color:"#1a1a1a"} },
-      { key:"strains", label:"זנים" },
-      { key:"weightType", label:"משקל" },
+      { key:"strains", label:"זנים", render: r => r.strains || "—" },
+      { key:"weightKind", label:"משקל", render: r => r.weightKind || "—" },
       { key:"quantity", label:"כמות" },
       { key:"totalAmount", label:'סה"כ', render: r => <strong style={{color:"#16a34a"}}>{toNum(r.totalAmount).toFixed(2)} ₪</strong> },
     ],
@@ -371,7 +371,7 @@ const TABS = [
       { key:"date", label:"תאריך", type:"date", default: today() },
       { key:"name", label:"מטע", placeholder:"שם המטע", required:true },
       { key:"strains", label:"זנים מטופלים", placeholder:"גולדן, פוג׳י..." },
-      { key:"weightType", label:"סוג משקל", type:"select-weight" },
+      { key:"weightKind", label:"סוג משקל", type:"select-weight" },
       { key:"number", label:"סכום ליחידה (₪)", type:"number", placeholder:"0" },
       { key:"quantity", label:"כמות", type:"number", placeholder:"0" },
     ],
@@ -405,27 +405,9 @@ const TABS = [
       { key:"workKind", label:"עבודה" },
       { key:"quantity", label:"דונמים" },
       { key:"number", label:"חומרים", render: r => `${toNum(r.number).toFixed(2)} ₪` },
-      { key:"workPrice", label:"עבודה", render: r => `${toNum(r.workPrice).toFixed(2)} ₪` },
+      { key:"workPrice", label:"עלות עבודת טרקטור", render: r => `${toNum(r.workPrice).toFixed(2)} ₪` },
       { key:"totalAmount", label:'סה"כ', render: r => <strong style={{color:"#16a34a"}}>{toNum(r.totalAmount).toFixed(2)} ₪</strong> },
     ],
-  },
-  {
-    key: "personalProductExpenses", label: "הוצאות מוצרים", icon: "📦",
-    cols: [
-      { key:"date", label:"תאריך", style:{fontSize:"12px",color:"#6b7280"} },
-      { key:"name", label:"מוצר", style:{fontWeight:"500",color:"#1a1a1a"} },
-      { key:"quantity", label:"כמות" },
-      { key:"number", label:"מחיר", render: r => `${toNum(r.number).toFixed(2)} ₪` },
-      { key:"totalAmount", label:'סה"כ', render: r => <strong style={{color:"#16a34a"}}>{toNum(r.totalAmount).toFixed(2)} ₪</strong> },
-    ],
-    fields: [
-      { key:"date", label:"תאריך", type:"date", default: today() },
-      { key:"name", label:"שם המוצר", placeholder:"שם המוצר", required:true },
-      { key:"quantity", label:"כמות", type:"number", placeholder:"0" },
-      { key:"number", label:"מחיר (₪)", type:"number", placeholder:"0" },
-    ],
-    calcTotal: (f) => parseFloat((toNum(f.quantity)*toNum(f.number)).toFixed(2)),
-    useRkr: false,
   },
   {
     key: "personalInvestments", label: "השקעות", icon: "📈",
@@ -462,6 +444,8 @@ export default function PersonalPage() {
 
   const { data: taxArr   = [] } = useQuery({ queryKey: ["taxValues"],         queryFn: fetchAll("/taxValues") });
   const maamValue = parseFloat(taxArr?.[0]?.maamValue) || 17;
+  const { data: tractorArr = [] } = useQuery({ queryKey: ["tractorPrice"], queryFn: fetchAll("/tractorPrice") });
+  const tractorPrice = parseFloat(tractorArr?.[0]?.price) || 0;
   const { data: records  = [] } = useQuery({ queryKey: [activeTab],                queryFn: fetchAll(ep) });
   const { data: clients  = [] } = useQuery({ queryKey: ["clients"],                 queryFn: fetchAll("/clients") });
   const { data: expenses = [] } = useQuery({ queryKey: ["expenses"],                queryFn: fetchAll("/expenses") });
@@ -565,8 +549,9 @@ export default function PersonalPage() {
             onClose={() => setModal(null)}
             onSave={handleRkrSave}
             loading={addMut.isPending || editMut.isPending}
-            expenses={personalProducts}
+            expenses={expenses}
             clients={clients}
+            tractorPrice={tractorPrice}
           />
         ) : (
           <GenericModal
