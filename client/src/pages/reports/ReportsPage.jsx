@@ -58,7 +58,6 @@ const SECTIONS = [
     columns: ["תאריך", "השקעה", "סכום", "הערות", 'סה"כ'],
     row: (r) => [r.date, r.name, `${fmt(r.number)} ₪`, r.other && r.other !== "-" ? r.other : "—", `${fmt(r.totalAmount)} ₪`],
   },
-
 ];
 
 // ─── Sale Detail Row (compact) ───────────────────────────────
@@ -68,14 +67,11 @@ function SaleDetailRow({ sale, colCount, tractorPriceFromSettings }) {
   const prices = sale.pricesOfProducts || {};
   const dunam = toNum(sale.quantity);
 
-  // סעיר טרקטור — מהגדרות × דונמים
   const tractorPrice = toNum(tractorPriceFromSettings);
   const tractorTotal = parseFloat((dunam * tractorPrice).toFixed(2));
-  const materialsTotal = Object.values(prices).reduce((a, v) => a + toNum(v), 0);
 
   if (products.length === 0 && tractorTotal === 0) return null;
 
-  // Build compact string
   const parts = [];
 
   if (products.length > 0) {
@@ -148,77 +144,121 @@ const s = {
   empty: { padding: "48px", textAlign: "center", color: "#a3a3a3", fontSize: "14px" },
 };
 
+// ─── الحل الصحيح: فتح نافذة طباعة منفصلة بـ HTML نظيف ───────
 const PRINT_STYLE = `
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    direction: rtl;
+    font-family: 'Heebo', 'Arial Hebrew', Arial, sans-serif;
+    font-size: 12px;
+    color: #1a1a1a;
+    background: #fff;
+  }
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #16a34a;
+    margin-bottom: 16px;
+  }
+
+  .print-header .company {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .print-header .meta {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  .print-header .total-box {
+    text-align: center;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 8px 16px;
+  }
+
+  .print-header .total-box .lbl {
+    font-size: 10px;
+    color: #6b7280;
+  }
+
+  .print-header .total-box .amt {
+    font-size: 16px;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th {
+    background: #f0fdf4;
+    color: #374151;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 2px solid #16a34a;
+    text-align: right;
+  }
+
+  td {
+    font-size: 11px;
+    padding: 7px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: right;
+  }
+
+  tr:nth-child(even) td { background: #fafafa; }
+
+  td.amount {
+    font-weight: 600;
+    color: #16a34a;
+  }
+
+  .detail-td {
+    font-size: 10px;
+    color: #92400e;
+    background: #fff9f0 !important;
+    border-right: 3px solid #f97316;
+    padding: 4px 14px 8px 10px;
+  }
+
+  .print-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 2px solid #16a34a;
+    margin-top: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #15803d;
+  }
+
   @media print {
     @page {
       size: A4 portrait;
-      margin: 10mm 8mm;
+      margin: 15mm 10mm;
     }
-
-    body * { visibility: hidden !important; }
-    #print-area, #print-area * { visibility: visible !important; }
-    .no-print { display: none !important; }
-    .print-doc-header { display: none !important; }
-    .print-footer      { display: none !important; }
-
-    #print-area {
-      position: fixed;
-      top: 0; right: 0; left: 0;
-      direction: rtl;
-      font-family: 'Heebo', 'Arial Hebrew', Arial, sans-serif;
-      color: #1a1a1a;
-    }
-
-    /* ── Table ── */
-    table {
-      width: 100% !important;
-      min-width: 100% !important;
-      border-collapse: collapse !important;
-      font-size: 11px;
-      table-layout: fixed !important;
-    }
-
-    thead th:nth-child(1) { width: 13% !important; }
-    thead th:nth-child(2) { width: 20% !important; }
-    thead th:nth-child(3) { width: 20% !important; }
-    thead th:nth-child(4) { width: 20% !important; }
-    thead th:nth-child(5) { width: 10% !important; }
-    thead th:nth-child(6) { width: 17% !important; }
-
-    thead th {
-      background: #f0fdf4 !important;
-      color: #15803d !important;
-      font-weight: 600;
-      padding: 9px 8px;
-      text-align: right;
-      border-top: 2px solid #86efac;
-      border-bottom: 2px solid #86efac;
-      overflow: hidden;
-      word-break: break-word;
-    }
-    tbody td {
-      padding: 9px 8px;
-      text-align: right;
-      border-bottom: 1px solid #ebebeb;
-      vertical-align: middle;
-      font-size: 11px;
-      overflow: hidden;
-      word-break: break-word;
-    }
-    tbody tr:nth-child(even) td { background: #f9fdf9; }
-    tbody td:last-child { font-weight: 700; color: #16a34a; }
-
-    /* ── Detail row ── */
-    .detail-row td {
-      background: #fff9f0 !important;
-      padding: 4px 8px 8px !important;
-      font-size: 10px !important;
-      color: #78350f !important;
-      border-bottom: 1px solid #fde8c8 !important;
-      border-right: 3px solid #f97316 !important;
-      word-break: break-word !important;
-      white-space: normal !important;
-    }
+    body { margin: 0; }
   }
 `;
 
@@ -264,12 +304,95 @@ export default function ReportsPage() {
     ? `${MONTHS_HE[parseInt(month) - 1]} ${year}`
     : `שנת ${year}`;
 
+  // ─── فتح نافذة طباعة منفصلة بـ HTML نظيف ───
   const handlePrint = () => {
-    const style = document.createElement("style");
-    style.innerHTML = PRINT_STYLE;
-    document.head.appendChild(style);
-    window.print();
-    setTimeout(() => document.head.removeChild(style), 1000);
+    // بناء صفوف الجدول
+    let rowsHtml = "";
+    filtered.forEach((r, i) => {
+      const cells = section.row(r, maamValue);
+      const isLast = (j) => j === cells.length - 1;
+      rowsHtml += `<tr>`;
+      cells.forEach((cell, j) => {
+        rowsHtml += `<td class="${isLast(j) ? "amount" : ""}">${cell ?? "—"}</td>`;
+      });
+      rowsHtml += `</tr>`;
+
+      // تفاصيل المبيعات
+      if (section.hasDetail) {
+        const products = r.product || [];
+        const quantities = r.quantitiesOfProduct || {};
+        const prices = r.pricesOfProducts || {};
+        const dunam = toNum(r.quantity);
+        const tractorPrice = toNum(tractorPriceFromSettings);
+        const tractorTotal = parseFloat((dunam * tractorPrice).toFixed(2));
+
+        if (products.length > 0 || tractorTotal > 0) {
+          const parts = [];
+          if (products.length > 0) {
+            const matStr = products.map(prod => {
+              const qty = toNum(quantities[prod]);
+              const price = toNum(prices[prod]);
+              return `${prod} ${qty}ל׳ (${fmt(price)}₪)`;
+            }).join(" | ");
+            parts.push(`🧪 ${matStr}`);
+          }
+          if (tractorTotal > 0) {
+            parts.push(`🚜 ${dunam}ד׳ × ${fmt(tractorPrice)}₪ = ${fmt(tractorTotal)}₪`);
+          }
+          rowsHtml += `<tr><td colspan="${cells.length}" class="detail-td">חישוב מפורט: ${parts.join("  |  ")}  =  ${fmt(r.totalAmount)} ₪</td></tr>`;
+        }
+      }
+    });
+
+    const colsHtml = section.columns.map(c => `<th>${c}</th>`).join("");
+
+    const dateStr = new Date().toLocaleDateString("he-IL", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+
+    const totalHtml = total > 0 ? `
+      <div class="total-box">
+        <div class="lbl">סה"כ</div>
+        <div class="amt">${total.toFixed(2)} ₪</div>
+      </div>` : "";
+
+    const html = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${section.label} - ${periodLabel}</title>
+  <style>${PRINT_STYLE}</style>
+</head>
+<body>
+  <div class="print-header">
+    <div>
+      <div class="company">ח.א חקלאות 🌾</div>
+      <div class="meta">${section.label} &nbsp;|&nbsp; ${periodLabel} &nbsp;|&nbsp; ${dateStr}</div>
+    </div>
+    ${totalHtml}
+  </div>
+
+  <table>
+    <thead><tr>${colsHtml}</tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+
+  <div class="print-footer">
+    <div>סה"כ ${periodLabel}: ${total.toFixed(2)} ₪</div>
+    <div>${filtered.length} רשומות</div>
+  </div>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank", "width=900,height=700");
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+      // win.close(); // uncomment إذا أردت إغلاق النافذة تلقائياً بعد الطباعة
+    }, 500);
   };
 
   return (
@@ -314,7 +437,6 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* Client filter — only for sections with clients */}
         {section?.hasClient && (
           <div style={s.fg}>
             <label style={s.label}>{activeSection === "personalWorkers" ? "סינון לפי עובד" : "סינון לפי לקוח"}</label>
@@ -352,24 +474,6 @@ export default function ReportsPage() {
 
       {/* Report */}
       <div id="print-area">
-
-        {/* ── Print-only header ── */}
-        <div className="print-doc-header" style={{ display: "none" }}>
-          <div>
-            <div className="company">ח.א חקלאות 🌾</div>
-            <div className="meta">
-              {section?.label} &nbsp;|&nbsp; {periodLabel} &nbsp;|&nbsp;
-              {new Date().toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </div>
-          </div>
-          {total > 0 && (
-            <div className="total-box">
-              <div className="label">סה"כ</div>
-              <div className="amount">{total.toFixed(2)} ₪</div>
-            </div>
-          )}
-        </div>
-
         <div style={s.report}>
           <div style={s.repHeader}>
             <div>
@@ -397,7 +501,6 @@ export default function ReportsPage() {
                 <tbody>
                   {filtered.map((r, i) => (
                     <>
-                      {/* Main row */}
                       <tr key={r._id || i}
                         style={{ background: i % 2 === 0 ? "#fff" : "#fefefe" }}>
                         {section.row(r, maamValue).map((cell, j) => (
@@ -409,8 +512,6 @@ export default function ReportsPage() {
                           }}>{cell}</td>
                         ))}
                       </tr>
-
-                      {/* Detail row — only for sales */}
                       {section.hasDetail && (
                         <SaleDetailRow
                           key={`detail-${r._id}`}
@@ -433,13 +534,6 @@ export default function ReportsPage() {
             </>
           )}
         </div>
-
-        {/* ── Print-only footer ── */}
-        <div className="print-footer" style={{ display: "none" }}>
-          <div>סה"כ {periodLabel}: {total.toFixed(2)} ₪</div>
-          <div className="records">{filtered.length} רשומות</div>
-        </div>
-
       </div>
     </div>
   );
