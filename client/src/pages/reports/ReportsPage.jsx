@@ -38,7 +38,7 @@ const SECTIONS = [
     key: "personalSales", label: "הכנסות אישיות", icon: "💵", endpoint: "/personalSales",
     columns: ["תאריך", "מטע", "זנים", "משקל", "כמות", 'סה"כ'],
     row: (r) => [r.date, r.name, r.strains || "—", r.weightKind || "—", r.quantity || "—", `${fmt(r.totalAmount)} ₪`],
-    applyVat: true,
+    applyVat: true, hasStrain: true, hasWeightSum: true,
   },
   {
     key: "personalWorkers", label: "עובדים", icon: "👷", endpoint: "/personalWorkers",
@@ -312,6 +312,7 @@ export default function ReportsPage() {
   const [mode, setMode] = useState("month");
   const [activeSection, setActiveSection] = useState("sales");
   const [clientFilter, setClientFilter] = useState("");
+  const [strainFilter, setStrainFilter] = useState("");
 
   const { data: taxArr = [] } = useQuery({ queryKey: ["taxValues"], queryFn: fetchData("/taxValues") });
   const { data: tractorArr = [] } = useQuery({ queryKey: ["tractorPrice"], queryFn: fetchData("/tractorPrice") });
@@ -325,6 +326,14 @@ export default function ReportsPage() {
     queryFn: fetchData(section.endpoint),
   });
 
+  const strainOptions = useMemo(() => {
+    if (!section?.hasStrain) return [];
+    const all = rawData.flatMap(r =>
+      (r.strains || "").split(",").map(v => v.trim()).filter(Boolean)
+    );
+    return [...new Set(all)].sort();
+  }, [rawData, section]);
+
   const filtered = useMemo(() => {
     let data = rawData;
     if (section.dateField === null) return data;
@@ -336,12 +345,24 @@ export default function ReportsPage() {
     if (clientFilter && section.hasClient) {
       data = data.filter(r => (r.clientName || "").includes(clientFilter));
     }
+    if (strainFilter && section.hasStrain) {
+      data = data.filter(r => (r.strains || "").includes(strainFilter));
+    }
     return data;
-  }, [rawData, year, month, mode, section, clientFilter]);
+  }, [rawData, year, month, mode, section, clientFilter, strainFilter]);
 
   const total = useMemo(() => filtered.reduce((a, r) => a + toNum(r.totalAmount), 0), [filtered]);
   const taxTotal   = section?.applyVat ? parseFloat((total * (maamValue / 100)).toFixed(2)) : 0;
   const grandTotal = parseFloat((total + taxTotal).toFixed(2));
+
+  const totalWeight = useMemo(() => {
+    if (!section?.hasWeightSum) return 0;
+    return filtered.reduce((sum, r) => {
+      const qty = toNum(r.quantity);
+      const isTon = (r.weightKind || "").includes("טון");
+      return sum + (isTon ? qty * 1000 : qty);
+    }, 0);
+  }, [filtered, section]);
 
   const years = ["2023", "2024", "2025", "2026", "2027"];
 
@@ -410,6 +431,10 @@ export default function ReportsPage() {
           <span class="vat-op">=</span>
           <span class="vat-total">${grandTot.toFixed(2)} ₪</span>
         ` : ''}
+        ${section?.hasWeightSum && totalWeight > 0 ? `
+          <span class="vat-op">|</span>
+          <span class="vat-label">סה"כ ${totalWeight.toLocaleString("he-IL")} ק"ג</span>
+        ` : ''}
       </div>` : "";
 
     const html = `<!DOCTYPE html>
@@ -435,7 +460,7 @@ export default function ReportsPage() {
   </table>
 
   <div class="print-footer">
-    <div>סה"כ לפני מע"מ ${periodLabel}: ${total.toFixed(2)} ₪${applyVat ? ` | כולל מע"מ: ${grandTot.toFixed(2)} ₪` : ""}</div>
+    <div>סה"כ לפני מע"מ ${periodLabel}: ${total.toFixed(2)} ₪${applyVat ? ` | כולל מע"מ: ${grandTot.toFixed(2)} ₪` : ""}${section?.hasWeightSum && totalWeight > 0 ? ` | סה"כ ${totalWeight.toLocaleString("he-IL")} ק"ג` : ""}</div>
     <div>${filtered.length} רשומות</div>
   </div>
 </body>
@@ -505,6 +530,18 @@ export default function ReportsPage() {
           </div>
         )}
 
+        {section?.hasStrain && (
+          <div style={s.fg}>
+            <label style={s.label}>סינון לפי זן</label>
+            <select style={s.select} value={strainFilter} onChange={e => setStrainFilter(e.target.value)}>
+              <option value="">כל הזנים</option>
+              {strainOptions.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <button style={s.btnPrint} onClick={handlePrint}
           onMouseEnter={e => e.currentTarget.style.background = "#15803d"}
           onMouseLeave={e => e.currentTarget.style.background = "#16a34a"}>
@@ -522,34 +559,50 @@ export default function ReportsPage() {
         {SECTIONS.map(sec => (
           <button key={sec.key}
             style={{ ...s.tab, ...(activeSection === sec.key ? s.tabActive : {}) }}
-            onClick={() => { setActiveSection(sec.key); setClientFilter(""); }}>
+            onClick={() => { setActiveSection(sec.key); setClientFilter(""); setStrainFilter(""); }}>
             {sec.icon} {sec.label}
           </button>
         ))}
       </div>
 
       {/* Report */}
-      {/* Summary Bar - מע"מ */}
+      {/* Summary Bar - מע"מ + משקל */}
       {section?.applyVat && total > 0 && (
-        <div style={{ background:"#fff", borderRadius:"12px", border:"1px solid #f0f0ef", padding:"16px 24px", marginBottom:"16px", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", display:"flex", gap:"24px", alignItems:"center", flexWrap:"wrap", direction:"rtl" }} className="no-print">
-          <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-            <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>סה"כ לפני מע"מ</span>
-            <span style={{ fontSize:"18px", fontWeight:"700", color:"#374151" }}>{total.toFixed(2)} ₪</span>
+        <div style={{ background:"#fff", borderRadius:"12px", border:"1px solid #f0f0ef", padding:"16px 24px", marginBottom:"16px", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", direction:"rtl" }} className="no-print">
+          <div style={{ display:"flex", gap:"24px", alignItems:"center", flexWrap:"wrap" }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
+              <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>סה"כ לפני מע"מ</span>
+              <span style={{ fontSize:"18px", fontWeight:"700", color:"#374151" }}>{total.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+            <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
+              <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>מע"מ ({maamValue}%)</span>
+              <span style={{ fontSize:"16px", fontWeight:"700", color:"#d97706" }}>{taxTotal.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
+            <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
+              <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>סה"כ כולל מע"מ</span>
+              <span style={{ fontSize:"18px", fontWeight:"700", color:"#16a34a" }}>{grandTotal.toFixed(2)} ₪</span>
+            </div>
+            <div style={{ marginRight:"auto" }}>
+              <div style={{ fontSize:"11px", color:"#a3a3a3" }}>שיעור מע"מ</div>
+              <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151" }}>{maamValue}%</div>
+            </div>
           </div>
-          <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
-          <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-            <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>מע"מ ({maamValue}%)</span>
-            <span style={{ fontSize:"16px", fontWeight:"700", color:"#d97706" }}>{taxTotal.toFixed(2)} ₪</span>
-          </div>
-          <div style={{ width:"1px", background:"#f0f0ef", alignSelf:"stretch" }}/>
-          <div style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-            <span style={{ fontSize:"11px", color:"#a3a3a3", fontWeight:"500", letterSpacing:"0.04em", textTransform:"uppercase" }}>סה"כ כולל מע"מ</span>
-            <span style={{ fontSize:"18px", fontWeight:"700", color:"#16a34a" }}>{grandTotal.toFixed(2)} ₪</span>
-          </div>
-          <div style={{ marginRight:"auto" }}>
-            <div style={{ fontSize:"11px", color:"#a3a3a3" }}>שיעור מע"מ</div>
-            <div style={{ fontSize:"13px", fontWeight:"600", color:"#374151" }}>{maamValue}%</div>
-          </div>
+
+          {section?.hasWeightSum && totalWeight > 0 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: "8px",
+              marginTop: "12px", paddingTop: "12px",
+              borderTop: "1px dashed #e5e7eb",
+            }}>
+              <span style={{ fontSize: "15px" }}>⚖️</span>
+              <span style={{ fontSize: "12px", color: "#6b7280", fontWeight: "500" }}>סה"כ משקל:</span>
+              <span style={{ fontSize: "15px", fontWeight: "700", color: "#374151" }}>
+                {totalWeight.toLocaleString("he-IL")} ק"ג
+              </span>
+            </div>
+          )}
         </div>
       )}
       <div id="print-area">
