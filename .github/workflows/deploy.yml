@@ -10,8 +10,12 @@ jobs:
     steps:
       - name: Setup SSH key
         run: |
-          echo "${{ secrets.VPS_SSH_KEY_B64 }}" | base64 -d > $GITHUB_WORKSPACE/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY_B64 }}" | tr -d '\n' | base64 -d > $GITHUB_WORKSPACE/deploy_key
           chmod 644 $GITHUB_WORKSPACE/deploy_key
+          echo "---- key check ----"
+          wc -l $GITHUB_WORKSPACE/deploy_key
+          head -n 1 $GITHUB_WORKSPACE/deploy_key
+          tail -n 1 $GITHUB_WORKSPACE/deploy_key
 
       - name: Deploy to VPS (attempt 1)
         id: deploy1
